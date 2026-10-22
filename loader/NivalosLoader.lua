@@ -32,7 +32,7 @@ end
 local function protectedParent(gui)
 	-- Try gethui, then CoreGui, then PlayerGui
 	local ok = pcall(function()
-		gui.Parent = (gethui and gethui()) or game:GetService("CoreGui")
+		gui.Parent = if gethui then gethui() elseif cloneref then cloneref(game:GetService("CoreGui")) else game:GetService("CoreGui")
 	end)
 	if not ok or not gui.Parent then
 		gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
