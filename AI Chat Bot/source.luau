@@ -220,6 +220,7 @@ if wnd and hum and hrp then
 end
 t.MessageReceived:Connect(function(msg)
 	if not msg.TextSource then return end
+	if msg.TextSource.UserId == lp.UserId then return end
 	local spk = p:GetPlayerByUserId(msg.TextSource.UserId)
 	if not spk then return end
 	local txt = msg.Text
