@@ -15,7 +15,7 @@ env.SecureMode = true
 
 local ver = "V1.0.0"
 
-local win = Startlight:CreateWindow({
+local win = Starlight:CreateWindow({
     Name = "Bot Loader",
     Subtitle = ver,
     Icon = 11179491521,
