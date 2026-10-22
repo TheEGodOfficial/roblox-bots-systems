@@ -95,7 +95,7 @@ An AI Chat bot using OpenRouter and you supply an API key, change settings, etc.
 	openrouter/free
 ]]
 
-local env = getgenv and getgenv() or shared or _G
+local env = (type(getgenv) == "function" and getgenv()) or shared or _G
 
 env.APIKey = "sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxx"
 env.AIModel = "minimax/minimax-m3.1-flash:free"
