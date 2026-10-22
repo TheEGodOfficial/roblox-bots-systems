@@ -98,28 +98,22 @@ Copyright (c) 2026 E God/Fred
 	AI MODELS:
 
 	FREE MODELS ON OPENROUTER (as of late October 2026)
-	Just change the m variable to any of these:
+	Just change the env.AIModel variable to any of these:
 
-	-- Top / Recommended
-	nvidia/nemotron-3.5-super-vl:free
-	nvidia/nemotron-3-ultra-550b-a55b:free
-	thinkingmachines/inkling:free
-	thinkingmachines/inkling-small:free
-	google/gemma-4-31b-it:free
-	google/gemma-4-26b-a4b-it:free
-	nvidia/nemotron-3-super-120b-a12b:free
-	nvidia/nemotron-3.5-lightning:free
-	nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-
-	-- Other free ones
-	cohere/north-mini-code:free
-	poolside/laguna-s-2.1:free
-	poolside/laguna-xs-2.1:free
-	xingchen-agi/xing4.0-29b-a4b:free
-	liquid/lfm-2.5-2.6b:free
-	dots-studio/dots-3-note-preview:free
-	recursive/flint-v1.0:free
-	openrouter/free
+	"nvidia/nemotron-3.5-super-vl:free",
+	"thinkingmachines/inkling:free",
+	"nvidia/nemotron-3-ultra-550b-a55b:free",
+	"nvidia/nemotron-3-super-120b-a12b:free",
+	"google/gemma-4-31b-it:free",
+	"xingchen-agi/xing4.0-29b-a4b:free",
+	"recursive/flint-v1.0:free",
+	"thinkingmachines/inkling-small:free",
+	"google/gemma-4-26b-a4b-it:free",
+	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+	"cohere/north-mini-code:free",
+	"nvidia/nemotron-3.5-lightning:free",
+	"liquid/lfm-2.5-2.6b:free",
+	"nvidia/nemotron-3.5-content-safety:free",
 ]]
 
 local env = (type(getgenv) == "function" and getgenv()) or shared or _G
