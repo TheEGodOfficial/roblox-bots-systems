@@ -1,7 +1,7 @@
 --[[
 MIT License
 
-Copyright (c) 2026 E God/Fred
+Copyright (c) 2026 E God/Fred & Nivalos
 ]]
 -- Bot Loader by @nivalox on github
 
