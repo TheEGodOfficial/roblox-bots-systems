@@ -61,19 +61,16 @@ local tips = {
 	"Far away? Use " .. c .. "before your message.",
 	"Near me means no command needed. Far away means use " .. c
 }
-local b = script.Parent:IsA("BasePart") and script.Parent 
-	or script.Parent:FindFirstChildWhichIsA("BasePart") 
-	or workspace:FindFirstChild("AIBot")
+local b = lp.Character
 local hum, hrp
 if b then
-	local mdl = b:FindFirstAncestorOfClass("Model") or b.Parent
+	local mdl = b
 	hum = mdl and mdl:FindFirstChildOfClass("Humanoid")
-	hrp = mdl and mdl:FindFirstChild("HumanoidRootPart") or b
+	hrp = mdl and mdl:FindFirstChild("HumanoidRootPart")
 end
 local sp = hrp and hrp.Position or Vector3.new(0,5,0)
 local function gp()
 	if hrp then return hrp.Position end
-	if b and b:IsA("BasePart") then return b.Position end
 	return sp
 end
 local function gr()
