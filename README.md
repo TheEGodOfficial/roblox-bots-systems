@@ -1,7 +1,7 @@
 # Roblox Bot Systems
 These are made to be used on a Roblox Account in order to work.
 
-They are made specifically for Exploits for example: Delta, Kawaii Potassium, Volcano, Synapse Z, Codex, Velocity, Solara, Xeno, etc.
+They are made specifically for Exploits for example: Delta, Kawaii, Potassium, Volcano, Synapse Z, Codex, Velocity, Solara, Xeno, etc.
 
 Licensed under the MIT License.
 
