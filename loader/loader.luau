@@ -9,12 +9,16 @@ local Starlight = loadstring(game:HttpGet("https://raw.nebulasoftworks.xyz/starl
 
 local NebulaIcons = loadstring(game:HttpGet("https://raw.nebulasoftworks.xyz/nebula-icon-library-loader"))()
 
+local env = (type(getgenv) == "function" and getgenv()) or shared or _G
+
+env.SecureMode = true
+
 local ver = "V1.0.0"
 
 local win = Startlight:CreateWindow({
     Name = "Bot Loader",
     Subtitle = ver,
-    Icon = 0,
+    Icon = 11179491521,
 
     LoadingEnabled = true,
 
