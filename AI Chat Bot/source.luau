@@ -68,6 +68,15 @@ if b then
 	hum = mdl and mdl:FindFirstChildOfClass("Humanoid")
 	hrp = mdl and mdl:FindFirstChild("HumanoidRootPart")
 end
+lp.CharacterAdded:Connect(function(c)
+	b = c
+	b:WaitForChild("HumanoidRootPart")
+	if b then
+		local mdl = b
+		hum = mdl and mdl:FindFirstChildOfClass("Humanoid")
+		hrp = mdl and mdl:FindFirstChild("HumanoidRootPart")
+	end
+end)
 local sp = hrp and hrp.Position or Vector3.new(0,5,0)
 local function gp()
 	if hrp then return hrp.Position end
