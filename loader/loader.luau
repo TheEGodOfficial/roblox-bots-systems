@@ -1,3 +1,8 @@
+--[[
+MIT License
+
+Copyright (c) 2026 E God/Fred
+]]
 -- Bot Loader by @nivalox on github
 
 -- Main Variables
