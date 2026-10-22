@@ -1,3 +1,9 @@
+--[[
+MIT License
+
+Copyright (c) 2026 E God/Fred
+]]
+
 local ps = game:GetService("Players")
 local tcs = game:GetService("TextChatService")
 local http = game:GetService("HttpService")
