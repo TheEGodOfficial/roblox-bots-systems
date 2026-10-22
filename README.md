@@ -14,6 +14,7 @@ MIT License
 
 Copyright (c) 2026 E God/Fred
 ]]
+-- credits to github contributor: nivalox
 loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/loader/loader.luau"))()
 ```
 
