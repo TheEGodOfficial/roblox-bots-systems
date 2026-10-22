@@ -1,7 +1,7 @@
 --[[
 MIT License
 
-Copyright (c) 2026 E God/Fred & nivalos :3
+Copyright (c) 2026 E God/Fred
 ]]
 
 local env = (type(getgenv) == "function" and getgenv()) or shared or _G
@@ -20,18 +20,6 @@ local r = env.ChatRadius
 local wnd = env.Wandering
 local wnddist = env.WanderDistance
 local wndwait = env.WanderWait
-
--- Provider: "openrouter" or "gemini"
--- If env.Provider is not set, a model name starting with "gemini" (e.g. "gemini-2.5-flash")
--- automatically uses the Gemini API. OpenRouter style names ("google/gemini-...") stay on OpenRouter.
-local prov = string.lower(tostring(env.Provider or ""))
-if prov ~= "openrouter" and prov ~= "gemini" then
-	prov = (type(m) == "string" and string.sub(string.lower(m), 1, 6) == "gemini") and "gemini" or "openrouter"
-end
-if prov == "gemini" and type(m) == "string" then
-	m = m:gsub("^models/", "")
-end
-
 local busy = false
 local pid = game.PlaceId
 local uid = game.GameId
@@ -138,14 +126,7 @@ local function ch(msg)
 		end
 	end
 end
-
-local function decode(bd)
-	if typeof(bd) ~= "string" then return bd end
-	local ok, data = pcall(function() return h:JSONDecode(bd) end)
-	return ok and data or nil
-end
-
-local function askOpenRouter(txt)
+local function ask(txt)
 	local bdy = {
 		model = m,
 		messages = {
@@ -174,72 +155,12 @@ local function askOpenRouter(txt)
 	if code ~= 200 then
 		return "API Error " .. tostring(code) .. ": " .. tostring(bd)
 	end
-	local data = decode(bd)
-	if data and data.choices and data.choices[1] and data.choices[1].message then
+	local data = typeof(bd) == "string" and h:JSONDecode(bd) or bd
+	if data.choices and data.choices[1] and data.choices[1].message then
 		return data.choices[1].message.content
 	end
 	return "No valid reply received."
 end
-
-local function askGemini(txt)
-	local bdy = {
-		system_instruction = {
-			parts = {{text = pr}}
-		},
-		contents = {
-			{role = "user", parts = {{text = txt}}}
-		},
-		generationConfig = {
-			maxOutputTokens = tk,
-			temperature = 0.7
-		}
-	}
-	local ok, res = pcall(function()
-		return rq({
-			Url = "https://generativelanguage.googleapis.com/v1beta/models/" .. tostring(m) .. ":generateContent",
-			Method = "POST",
-			Headers = {
-				["Content-Type"] = "application/json",
-				["x-goog-api-key"] = k
-			},
-			Body = h:JSONEncode(bdy)
-		})
-	end)
-	if not ok then return "Request failed: " .. tostring(res) end
-	local code = res.StatusCode or res.status or res.Status or 200
-	local bd = res.Body or res.body or res
-	if code ~= 200 then
-		return "API Error " .. tostring(code) .. ": " .. tostring(bd)
-	end
-	local data = decode(bd)
-	if not data then return "No valid reply received." end
-	if data.promptFeedback and data.promptFeedback.blockReason then
-		return "Sorry, I can't answer that one."
-	end
-	local cand = data.candidates and data.candidates[1]
-	if cand and cand.content and cand.content.parts then
-		local out = {}
-		for _, part in ipairs(cand.content.parts) do
-			if part.text and not part.thought then
-				table.insert(out, part.text)
-			end
-		end
-		local s = table.concat(out):gsub("^%s+", ""):gsub("%s+$", "")
-		if s ~= "" then return s end
-	end
-	if cand and cand.finishReason then
-		return "No reply (" .. tostring(cand.finishReason) .. "). Try a higher TokenCount."
-	end
-	return "No valid reply received."
-end
-
-local function ask(txt)
-	if prov == "gemini" then
-		return askGemini(txt)
-	end
-	return askOpenRouter(txt)
-end
-
 local function nr(plr)
 	local char = plr.Character
 	if not char then return false end
@@ -320,10 +241,6 @@ t.MessageReceived:Connect(function(msg)
 	end
 end)
 print("[Range AI Bot] Loaded!")
-print("Provider:", prov)
 print("Model:", m)
 print("Game:", gnm)
 print("Range:", r, "studs")
-
-
--- My Pookie Wookie Gemini AI :3
