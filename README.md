@@ -5,6 +5,13 @@ They are made specifically for Exploits for example: Delta, Potassium, Volcano, 
 
 Licensed under the MIT License.
 
+## Loader (Optional)
+
+**Code:**
+```luau
+loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/loader/loader.luau"))()
+```
+
 ### Sword Fight Bot
 
 Made entirely in LuaU and mostly made by AI due to it having to be a very big project which would take ages of work.
