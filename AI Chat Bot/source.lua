@@ -1,4 +1,4 @@
-local env = getgenv and getgenv() or shared or _G
+local env = (type(getgenv) == "function" and getgenv()) or shared or _G
 
 local p = game:GetService("Players")
 local t = game:GetService("TextChatService")
