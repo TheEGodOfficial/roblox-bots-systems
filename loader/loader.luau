@@ -89,7 +89,7 @@ local acbgb = acbtb:CreateGroupbox({
 }, "ACB2")
 
 local APIKey = nil
-local AIModel = "minimax/minimax-m3.1-flash:free"
+local AIModel = "nvidia/nemotron-3.5-super-vl:free"
 local ChatCommand = "/ai "
 local TokenCount = 200
 local ChatRadius = 35
@@ -149,7 +149,6 @@ local acbl = acbgb2:CreateLabel({
 
 local acbam = acbl:AddDropdown({
     Options = {
-        "minimax/minimax-m3.1-flash:free",
 	      "nvidia/nemotron-3.5-super-vl:free",
 	      "nvidia/nemotron-3-ultra-550b-a55b:free",
 	      "thinkingmachines/inkling:free",
@@ -168,7 +167,7 @@ local acbam = acbl:AddDropdown({
 	      "recursive/flint-v1.0:free",
 	      "openrouter/free",
     },
-    CurrentOption = "minimax/minimax-m3.1-flash:free",
+    CurrentOption = "nvidia/nemotron-3.5-super-vl:free",
     PlaceholderText = "No AI Model",
     MultipleOptions = false,
     Callback = function(Options)
