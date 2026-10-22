@@ -9,6 +9,11 @@ Licensed under the MIT License.
 
 **Code:**
 ```luau
+--[[
+MIT License
+
+Copyright (c) 2026 E God/Fred
+]]
 loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/loader/loader.luau"))()
 ```
 
@@ -18,6 +23,11 @@ Made entirely in LuaU and mostly made by AI due to it having to be a very big pr
 
 **Code:**
 ```luau
+--[[
+MIT License
+
+Copyright (c) 2026 E God/Fred
+]]
 loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/Sword%20Fighter/source.luau"))()
 ```
 
@@ -27,6 +37,11 @@ Made in LuaU and very little coding made by AI (The only AI coded stuff is tiny 
 
 **Code:**
 ```luau
+--[[
+MIT License
+
+Copyright (c) 2026 E God/Fred
+]]
 loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/Loop%20Kill%20Sword%20Bot/source.luau"))()
 ```
 
@@ -36,6 +51,12 @@ An AI Chat bot using OpenRouter and you supply an API key, change settings, etc.
 
 **Code:**
 ```luau
+--[[
+MIT License
+
+Copyright (c) 2026 E God/Fred
+]]
+
 --[[
 	OpenRouter Range-Based AI Chatbot
 
