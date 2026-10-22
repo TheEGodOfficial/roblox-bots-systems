@@ -5,9 +5,7 @@ Copyright (c) 2026 E God/Fred
 ]]
 
 -- ui lib
-local Starlight = loadstring(game:HttpGet("https://raw.nebulasoftworks.xyz/starlight"))()
-
-local NebulaIcons = loadstring(game:HttpGet("https://raw.nebulasoftworks.xyz/nebula-icon-library-loader"))()
+local Starlight = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Starlight-Interface-Suite/refs/heads/master/Source.lua"))()
 
 local env = (type(getgenv) == "function" and getgenv()) or shared or _G
 
