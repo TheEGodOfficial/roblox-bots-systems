@@ -42,7 +42,7 @@ pcall(function()
 end)
 local pr = string.format([[
 You are a helpful and fun Roblox chatbot inside a game.
-Keep answers under 200 characters long and be friendly.
+Keep answers under 200 letters,numbers,etc long and be friendly.
 Never use emojis or special symbols in your replies. Only use normal letters, numbers, and basic punctuation like periods, commas, and question marks.
 Game Information:
 - Name: %s
