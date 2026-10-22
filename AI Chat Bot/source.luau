@@ -219,43 +219,32 @@ if wnd and hum and hrp then
 	end)
 end
 
-function msging(plr, msg)
-	if not plr then return end
-	local has = string.sub(msg, 1, #c) == c
-	local inr = nr(plr)
+t.MessageReceived:Connect(function(msg)
+	if not msg.TextSource then return end
+	local spk = p:GetPlayerByUserId(msg.TextSource.UserId)
+	if not spk then return end
+	local txt = msg.Text
+	local has = string.sub(txt, 1, #c) == c
+	local inr = nr(spk)
 	local dor = false
-	local q = msg
+	local q = txt
 	if inr then
 		dor = true
 		if has then
-			q = string.sub(msg, #c + 1):gsub("^%s+", "")
+			q = string.sub(txt, #c + 1):gsub("^%s+", "")
 		end
 	else
 		if has then
 			dor = true
-			q = string.sub(msg, #c + 1):gsub("^%s+", "")
+			q = string.sub(txt, #c + 1):gsub("^%s+", "")
 		end
 	end
-	if dor and q ~= "" and plr ~= lp and not busy then
+	if dor and q ~= "" and spk ~= lp and not busy then
 		busy = true
 		ch("Thinking...")
 		local rpl = ask(q)
 		ch(rpl)
 		busy = false
-	end
-end
-
-p.PlayerAdded:Connect(function(plr)
-	plr.Chatted:Connect(function(msg)
-		msging(plr, msg)
-	end)
-end)
-
-task.spawn(function()
-	for _, plr in pairs(p:GetPlayers()) do
-		plr.Chatted:Connect(function(msg)
-			msging(plr, msg)
-		end)
 	end
 end)
 print("[Range AI Bot] Loaded!")
