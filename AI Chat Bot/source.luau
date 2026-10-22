@@ -122,7 +122,7 @@ local function gr()
 end
 local rq = gr()
 local function ch(msg)
-	local chn = t.TextChannels:FindFirstChild("RBXGeneral")
+	local chn = t:WaitForChild("TextChannels"):FindFirstChild("RBXGeneral")
 	if chn then
 		chn:SendAsync(msg)
 	else
