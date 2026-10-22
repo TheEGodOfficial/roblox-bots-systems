@@ -1,4 +1,10 @@
 --[[
+MIT License
+
+Copyright (c) 2026 E God/Fred
+]]
+
+--[[
 	ABOUT THIS SCRIPT
 	A LocalScript sword-fighting bot for Roblox. Per its author, it is used in games the author made, run in
 	Roblox Studio with a plugin that implements the executor-style environment functions listed below.
