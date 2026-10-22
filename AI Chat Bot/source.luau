@@ -135,39 +135,66 @@ local function ch(msg)
 	end
 end
 local function ask(txt)
-	local bdy = {
-		model = m,
-		messages = {
-			{role="system", content=pr},
-			{role="user", content=txt}
-		},
-		max_tokens = tk,
-		temperature = 0.7
-	}
-	local ok, res = pcall(function()
-		return rq({
-			Url = "https://openrouter.ai/api/v1/chat/completions",
-			Method = "POST",
-			Headers = {
-				["Content-Type"] = "application/json",
-				["Authorization"] = "Bearer " .. k,
-				["HTTP-Referer"] = "https://roblox.com",
-				["X-Title"] = "Roblox Range AI Bot"
-			},
-			Body = h:JSONEncode(bdy)
-		})
-	end)
-	if not ok then return "Request failed: " .. tostring(res) end
-	local code = res.StatusCode or res.status or res.Status or 200
-	local bd = res.Body or res.body or res
-	if code ~= 200 then
-		return "API Error " .. tostring(code) .. ": " .. tostring(bd)
-	end
-	local data = typeof(bd) == "string" and h:JSONDecode(bd) or bd
-	if data.choices and data.choices[1] and data.choices[1].message then
-		return data.choices[1].message.content
-	end
-	return "No valid reply received."
+	print("APIKey:", tostring(env.APIKey))
+	print("AIModel:", tostring(env.AIModel))
+    local key = env.APIKey
+    local model = env.AIModel or "minimax/minimax-m3.1-flash:free"
+    if not key or key == "" then
+        return "OpenRouter API key missing."
+    end
+    local body = {
+        model = model,
+        messages = {
+            { role = "system", content = pr },
+            { role = "user", content = txt }
+        },
+        max_tokens = tonumber(tk) or 200,
+        temperature = 0.7
+    }
+    local ok, res = pcall(function()
+        return rq({
+            Url = "https://openrouter.ai/api/v1/chat/completions",
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json",
+                ["Authorization"] = "Bearer " .. key,
+                ["HTTP-Referer"] = "https://roblox.com",
+                ["X-Title"] = "Roblox Range AI Bot"
+            },
+            Body = h:JSONEncode(body)
+        })
+    end)
+    if not ok or not res then
+        return "Request failed: " .. tostring(res)
+    end
+    local responseText = type(res.Body) == "string" and res.Body or h:JSONEncode(res.Body or {})
+    local data
+    local decodeOkay, decoded = pcall(function()
+        return h:JSONDecode(responseText)
+    end)
+    if not decodeOkay then
+        return "Invalid JSON reply from OpenRouter."
+    end
+    data = decoded
+    if data and data.error then
+        return "OpenRouter error: " .. tostring(data.error.message or data.error.code or "unknown")
+    end
+    if data and data.choices and data.choices[1] and data.choices[1].message then
+        local content = data.choices[1].message.content
+        if type(content) == "table" then
+            local parts = {}
+            for _, part in ipairs(content) do
+                if part and part.type == "text" then
+                    table.insert(parts, part.text)
+                end
+            end
+            content = table.concat(parts, "\n")
+        end
+        if type(content) == "string" then
+            return content
+        end
+    end
+    return "No valid reply received."
 end
 local function nr(plr)
 	local char = plr.Character
