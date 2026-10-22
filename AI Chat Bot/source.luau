@@ -135,10 +135,8 @@ local function ch(msg)
 	end
 end
 local function ask(txt)
-	print("APIKey:", tostring(env.APIKey))
-	print("AIModel:", tostring(env.AIModel))
     local key = env.APIKey
-    local model = env.AIModel or "minimax/minimax-m3.1-flash:free"
+    local model = env.AIModel or "nvidia/nemotron-3.5-super-vl:free"
     if not key or key == "" then
         return "OpenRouter API key missing."
     end
