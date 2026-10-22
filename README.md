@@ -101,7 +101,6 @@ Copyright (c) 2026 E God/Fred
 	Just change the m variable to any of these:
 
 	-- Top / Recommended
-	minimax/minimax-m3.1-flash:free
 	nvidia/nemotron-3.5-super-vl:free
 	nvidia/nemotron-3-ultra-550b-a55b:free
 	thinkingmachines/inkling:free
