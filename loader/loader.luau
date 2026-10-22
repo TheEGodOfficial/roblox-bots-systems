@@ -61,7 +61,7 @@ local lkbtb = tbs:CreateTab({
     Columns = 1,
 }, "LKB")
 
-local lkbgb = lkbtb:CreateGroupBox({
+local lkbgb = lkbtb:CreateGroupbox({
     Name = "Loader",
     Columns = 1,
 }, "LKB2")
