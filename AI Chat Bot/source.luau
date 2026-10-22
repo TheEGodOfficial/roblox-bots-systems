@@ -122,7 +122,7 @@ local function gr()
 end
 local rq = gr()
 local function ch(msg)
-	local chn = t:WaitForChild("TextChannels"):FindFirstChild("RBXGeneral")
+	local chn = t.TextChannels:FindFirstChild("RBXGeneral")
 	if chn then
 		chn:SendAsync(msg)
 	else
@@ -250,7 +250,13 @@ p.PlayerAdded:Connect(function(plr)
 		msging(plr, msg)
 	end)
 end)
-	
+
+task.spawn(function()
+	for _, plr in pairs(p:GetPlayers()) do
+		plr.Chatted:Connect(function(msg)
+			msging(plr, msg)
+		end)
+	end
 end)
 print("[Range AI Bot] Loaded!")
 print("Model:", m)
