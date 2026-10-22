@@ -106,5 +106,5 @@ env.Wandering = true
 env.WanderDistance = 40
 env.WanderWait = 3
 
-loadstring(game:HttpGet(""))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/AI%20Chat%20Bot/source.lua"))()
 ```
