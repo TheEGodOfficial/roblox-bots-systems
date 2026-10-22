@@ -125,10 +125,12 @@ local function ch(msg)
 	local chn = t.TextChannels:FindFirstChild("RBXGeneral")
 	if chn then
 		chn:SendAsync(msg)
+		print("Debug AI: "..msg)
 	else
 		local e = game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemChatEvents")
 		if e and e:FindFirstChild("SayMessageRequest") then
 			e.SayMessageRequest:FireServer(msg, "All")
+			print("Debug AI: "..msg)
 		end
 	end
 end
