@@ -1,5 +1,6 @@
 --[[
 MIT License
+
 Copyright (c) 2026 E God/Fred
 ]]
 
@@ -501,13 +502,12 @@ local function stopUnseat()
 	end
 end
 
-local currentWpTarget = nil
-
 local function startAutoJump()
 	if autoJumpConn then autoJumpConn:Disconnect() end
 	local jumpCooldown = 0
 	local rayParams = RaycastParams.new()
 	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	local ws = game:GetService("Workspace")
 	autoJumpConn = rs.Heartbeat:Connect(function(dt)
 		if not hum or not hum.Parent or not hrp or not hrp.Parent then
 			autoJumpConn:Disconnect()
@@ -516,13 +516,29 @@ local function startAutoJump()
 		end
 		jumpCooldown = math.max(0, jumpCooldown - dt)
 		if hum.MoveDirection.Magnitude <= 0.1 then return end
+		if jumpCooldown > 0 then return end
 		rayParams.FilterDescendantsInstances = { b }
-		local origin = hrp.Position
-		local forward = hrp.CFrame.LookVector
-		local result = game:GetService("Workspace"):Raycast(origin, forward * 3.5, rayParams)
-		if result and jumpCooldown <= 0 then
+		local cf = hrp.CFrame
+		local forward = cf.LookVector
+		local pos = hrp.Position
+		local hit = false
+		-- low ray: catches fences, ledges, small walls (from ankle height)
+		local lowOrigin = pos - Vector3.new(0, 1.5, 0)
+		if ws:Raycast(lowOrigin, forward * 3, rayParams) then hit = true end
+		-- mid ray: catches taller obstacles at torso height
+		if not hit then
+			if ws:Raycast(pos, forward * 3, rayParams) then hit = true end
+		end
+		-- diagonal down-forward: catches when bot is on top of something uneven and about to get stuck
+		if not hit then
+			local diagDir = (forward + Vector3.new(0, -0.6, 0)).Unit * 3
+			local diagOrigin = pos + Vector3.new(0, 1, 0)
+			local res = ws:Raycast(diagOrigin, diagDir, rayParams)
+			if res and res.Normal.Y < 0.7 then hit = true end
+		end
+		if hit then
 			hum.Jump = true
-			jumpCooldown = 0.4
+			jumpCooldown = 0.5
 		end
 	end)
 end
