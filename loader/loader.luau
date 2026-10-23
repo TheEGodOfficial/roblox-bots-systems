@@ -23,8 +23,7 @@ if lp.Name == "SwordFightingClanker" then
     ]]
     loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/Sword%20Fighter/source.luau"))()
 	return
-end
-if lp.Name == "RoadBlocksV1" then
+elseif lp.Name == "RoadBlocksV1" then
 	--[[
     MIT License
 
@@ -32,8 +31,7 @@ if lp.Name == "RoadBlocksV1" then
     ]]
     loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/Loop%20Kill%20Sword%20Bot/source.luau"))()
 	return
-end
-if lp.Name == "Slop_AI" then
+elseif lp.Name == "Slop_AI" then
 	--[[
     MIT License
 
