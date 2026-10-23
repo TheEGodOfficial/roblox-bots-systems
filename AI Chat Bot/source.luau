@@ -4,8 +4,6 @@ MIT License
 Copyright (c) 2026 E God/Fred
 ]]
 
-
-
 local env = (type(getgenv) == "function" and getgenv()) or shared or _G
 
 local p = game:GetService("Players")
