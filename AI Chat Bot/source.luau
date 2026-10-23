@@ -168,7 +168,20 @@ local tps = {
 	"If you're far away, type " .. c .. "then your message.",
 	"I'm an AI bot, walk up and chat with me!",
 	"Far away? Use " .. c .. "before your message.",
-	"Near me means no command needed. Far away means use " .. c
+	"Near me means no command needed. Far away means use " .. c,
+	"I do not support voice chat. Type your message in chat to talk to me.",
+	"I can remember things you tell me. Try saying my name is or I like.",
+	"I am powered by Gemini AI. I might make mistakes sometimes.",
+	"I can only read text chat. I cannot hear you if you are using voice chat.",
+	"Ask me anything about this game and I will try to help.",
+	"I remember up to 8 things about you per session.",
+	"I respond to anyone close to me or anyone who uses " .. c .. "before their message.",
+	"I am a bot, not a real player. Do not report me.",
+	"My replies are limited to 200 characters so I keep things short.",
+	"I can see the names of everyone in this server.",
+	"I cannot send friend requests, trade, or join other games.",
+	"I cannot see images or links, only text messages.",
+	"Each reply is generated fresh. I do not have a memory of past sessions.",
 }
 
 local b = lp.Character
