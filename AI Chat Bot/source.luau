@@ -303,38 +303,38 @@ local function aq(txt, spk)
 
 	local function bb(mdl)
 		local bd = {
-			systemInstruction = { parts = { { text = pr } } },
-			contents = {
-				{ role = "user", parts = { { text = pt } } }
+			model = mdl,
+			messages = {
+				{ role = "system", content = pr },
+				{ role = "user", content = pt },
 			},
-			generationConfig = {
-				maxOutputTokens = mt,
-				temperature = 0.7,
-				topP = 0.9,
-			},
+			max_tokens = mt,
+			temperature = 0.7,
+			top_p = 0.9,
 		}
-		local tc
+		local re
 		if mdl:find("^gemini%-2%.5%-flash") then
-			tc = { thinkingBudget = 0 }
+			re = "none"
 		elseif mdl:find("^gemini%-2%.5%-pro") then
-			tc = { thinkingBudget = 128 }
+			re = "low"
 		elseif mdl:find("^gemini%-3") or mdl:find("^gemini%-4") or mdl:find("%-latest$") then
-			tc = { thinkingLevel = "minimal" }
+			re = "minimal"
 		end
-		if tc then
-			bd.generationConfig.thinkingConfig = tc
+		if re then
+			bd.reasoning_effort = re
 		end
 		return bd
 	end
 
 	local hdrs = {
 		["Content-Type"] = "application/json",
+		["Authorization"] = "Bearer " .. tostring(k),
 		["x-goog-api-key"] = tostring(k),
 	}
 
 	local function snd(mdl, bd)
 		local js = h:JSONEncode(bd)
-		local u = "https://generativelanguage.googleapis.com/v1beta/models/" .. mdl .. ":generateContent"
+		local u = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 		warn("Debug AI: calling " .. mdl)
 		local opt = {
 			Url = u,         url = u,
@@ -377,9 +377,9 @@ local function aq(txt, spk)
 		end
 	end
 
-	if not d and er and er:lower():find("thinking") then
+	if not d and er and (er:lower():find("reasoning") or er:lower():find("effort")) then
 		local bd = bb(mdl)
-		bd.generationConfig.thinkingConfig = nil
+		bd.reasoning_effort = nil
 		d, er = snd(mdl, bd)
 	end
 
@@ -389,27 +389,16 @@ local function aq(txt, spk)
 	if d.error then
 		return "Gemini error: " .. tostring(d.error.message or d.error.code or "unknown")
 	end
-	if d.promptFeedback and d.promptFeedback.blockReason then
-		return "Reply blocked: " .. tostring(d.promptFeedback.blockReason)
-	end
-	if d.candidates and d.candidates[1] then
-		local cd = d.candidates[1]
-		local pts = cd.content and cd.content.parts
-		local ot = {}
-		if type(pts) == "table" then
-			for _, prt in ipairs(pts) do
-				if type(prt) == "table" and type(prt.text) == "string" and prt.text ~= "" then
-					table.insert(ot, prt.text)
-				end
+	if d.choices and d.choices[1] and d.choices[1].message then
+		local tx = d.choices[1].message.content
+		if type(tx) == "string" then
+			tx = tx:gsub("%*+", ""):gsub("`+", "")
+			tx = tx:gsub("^%s+", ""):gsub("%s+$", "")
+			if tx ~= "" then
+				return tx
 			end
 		end
-		local tx = table.concat(ot, "\n")
-		tx = tx:gsub("%*+", ""):gsub("`+", "")
-		tx = tx:gsub("^%s+", ""):gsub("%s+$", "")
-		if tx ~= "" then
-			return tx
-		end
-		return "Empty reply (finishReason: " .. tostring(cd.finishReason) .. ")"
+		return "Empty reply (finish_reason: " .. tostring(d.choices[1].finish_reason) .. ")"
 	end
 	return "No valid reply received."
 end
