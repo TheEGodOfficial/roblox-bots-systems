@@ -47,7 +47,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblo
 
 ### AI Chat Bot
 
-An AI Chat bot using Google Gemini and you supply an API key, change settings, etc. Made in LuaU. The Setup and AI models comments are the only AI generated thing, but even I had to change stuff in them.
+An AI Chat bot using Google Gemini and you supply an API key, change settings, etc. Made in LuaU. The Setup and AI models comments are the only AI generated thing, but even I had to change stuff in them. (Some stuff in the code is now AI generated due to github co-pilot making it work with gemini only)
 
 **Code:**
 ```luau
