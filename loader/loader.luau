@@ -6,7 +6,7 @@ Copyright (c) 2026 E God/Fred
 
 local lp = game:GetService("Players").LocalPlayer
 
-local APIKey = "AQ.Ab8RN6IcY_fpDZV9F7CB6NZ_126seppE2UjiGh7KH6RKvds9Eg" -- do not touch please
+local APIKey = "AQ.Ab8RN6KyJ4poJJ9xtn4zDfpGGTNkd9tijOd9YSOJ57FkgdzCqw" -- do not touch please
 local AIModel = "gemini-2.0-flash"
 local ChatCommand = "/ai "
 local TokenCount = 200
