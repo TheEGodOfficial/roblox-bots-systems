@@ -413,16 +413,31 @@ local function aq(txt, spk)
 	if d.error then
 		return "Gemini error: " .. tostring(d.error.message or d.error.code or "unknown")
 	end
+	warn("Debug AI: raw content type = " .. type(d.choices[1].message.content))
+	warn("Debug AI: raw content = " .. h:JSONEncode(d.choices[1].message))
 	if d.choices and d.choices[1] and d.choices[1].message then
-		local tx = d.choices[1].message.content
-		if type(tx) == "string" then
-			tx = tx:gsub("%*+", ""):gsub("`+", "")
-			tx = tx:gsub("^%s+", ""):gsub("%s+$", "")
-			if tx ~= "" then
-				return tx
-			end
-		end
-		return "Empty reply (finish_reason: " .. tostring(d.choices[1].finish_reason) .. ")"
+    	local tx = d.choices[1].message.content
+
+    	if type(tx) == "table" then
+        	local parts = {}
+        	for _, part in ipairs(tx) do
+            	if type(part) == "table" and type(part.text) == "string" then
+                	table.insert(parts, part.text)
+            	elseif type(part) == "string" then
+                	table.insert(parts, part)
+            	end
+        	end
+        	tx = table.concat(parts, " ")
+    	end
+
+    	if type(tx) == "string" then
+        	tx = tx:gsub("%*+", ""):gsub("`+", "")
+        	tx = tx:gsub("^%s+", ""):gsub("%s+$", "")
+        	if tx ~= "" then
+            	return tx
+        	end
+    	end
+    	return "Empty reply (finish_reason: " .. tostring(d.choices[1].finish_reason) .. ")"
 	end
 	return "No valid reply received."
 end
