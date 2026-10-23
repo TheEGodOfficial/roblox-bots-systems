@@ -10,7 +10,7 @@ local env = (type(getgenv) == "function" and getgenv()) or shared or _G
 local lp = game:GetService("Players").LocalPlayer
 local HttpService = game:GetService("HttpService")
 
-local APIKey = "\65\81\46\65\98\56\82\78\54\75\104\55\79\55\53\73\75\104\105\52\122\119\80\66\104\114\69\81\55\57\120\106\112\83\97\71\48\76\53\68\113\121\84\55\111\52\119\49\51\102\77\104\103\10" -- do not touch please
+local APIKey = nil
 local AIModel = "gemini-flash-latest"
 local ChatCommand = "/ai "
 local TokenCount = 200
@@ -41,6 +41,7 @@ elseif lp.Name == "Slop_AI" then
 
     Copyright (c) 2026 E God/Fred
     ]]
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																						APIKey = "\65\81\46\65\98\56\82\78\54\75\104\55\79\55\53\73\75\104\105\52\122\119\80\66\104\114\69\81\55\57\120\106\112\83\97\71\48\76\53\68\113\121\84\55\111\52\119\49\51\102\77\104\103\10" -- do not touch please
     env.APIKey = APIKey
     env.AIModel = AIModel
     env.ChatCommand = ChatCommand
