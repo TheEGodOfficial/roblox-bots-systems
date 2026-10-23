@@ -1,36 +1,32 @@
 --[[
 MIT License
+
 Copyright (c) 2026 E God/Fred
 ]]
-
 local env = (type(getgenv) == "function" and getgenv()) or shared or _G
-
-env.APIKey       = env.APIKey       or "PASTE_YOUR_GEMINI_KEY_HERE"
-env.AIModel      = env.AIModel      or "gemini-flash-latest"
-env.ChatCommand  = env.ChatCommand  or "/ai "
-env.TokenCount   = env.TokenCount   or 200
-env.ChatRadius   = env.ChatRadius   or 35
-env.Wandering    = env.Wandering    ~= false
+env.APIKey = env.APIKey or "PASTE_YOUR_GEMINI_KEY_HERE"
+env.AIModel = env.AIModel or "gemini-flash-latest"
+env.ChatCommand = env.ChatCommand or "/ai "
+env.TokenCount = env.TokenCount or 200
+env.ChatRadius = env.ChatRadius or 35
+env.Wandering = env.Wandering ~= false
 env.WanderDistance = env.WanderDistance or 40
-env.WanderWait   = env.WanderWait   or 3
-
-local p   = game:GetService("Players")
-local t   = game:GetService("TextChatService")
-local h   = game:GetService("HttpService")
+env.WanderWait = env.WanderWait or 3
+local p = game:GetService("Players")
+local t = game:GetService("TextChatService")
+local h = game:GetService("HttpService")
 local pfs = game:GetService("PathfindingService")
 local mps = game:GetService("MarketplaceService")
-local lp  = p.LocalPlayer
-
-local k   = env.APIKey
-local m   = env.AIModel
-local c   = env.ChatCommand
-local tk  = env.TokenCount
-local r   = env.ChatRadius
+local lp = p.LocalPlayer
+local k = env.APIKey
+local m = env.AIModel
+local c = env.ChatCommand
+local tk = env.TokenCount
+local r = env.ChatRadius
 local wnd = env.Wandering
-local wd  = env.WanderDistance
-local ww  = env.WanderWait
-
-local bs  = false   -- bot is speaking / busy
+local wd = env.WanderDistance
+local ww = env.WanderWait
+local bs = false
 local pid = game.PlaceId
 local uid = game.GameId
 local gnm = "Unknown"
@@ -40,15 +36,11 @@ local cid = 0
 local isg = false
 local mxp = game.Players.MaxPlayers
 local plg = #p:GetPlayers()
-
-local kn  = {}   -- known userId -> name
-local pm  = {}   -- per-player memory
-local sch = {}   -- server chat history
-local MSH = 250  -- max server history entries
-local MPA = 3    -- max pathfinding attempts
-
--- ─── Player helpers ──────────────────────────────────────────────────────────
-
+local kn = {}
+local pm = {}
+local sch = {}
+local MSH = 250
+local MPA = 3
 local function rpn()
 	for _, pl in ipairs(p:GetPlayers()) do
 		if pl and pl.Name then
@@ -56,30 +48,25 @@ local function rpn()
 		end
 	end
 end
-
 local function gpl()
 	local nms = {}
 	for _, pl in ipairs(p:GetPlayers()) do
 		if pl then
-			local dn  = pl.DisplayName or pl.Name or "Unknown"
-			local nk  = pl.Name        or "Unknown"
-			local id  = pl.UserId      or 0
+			local dn = pl.DisplayName or pl.Name or "Unknown"
+			local nk = pl.Name or "Unknown"
+			local id = pl.UserId or 0
 			table.insert(nms, string.format("%s (%s) [UserId: %d]", dn, nk, id))
 		end
 	end
 	table.sort(nms)
 	return nms
 end
-
--- ─── Per-player memory ────────────────────────────────────────────────────────
-
 local function gml(plr)
 	if not plr then return {} end
 	local ky = tostring(plr.UserId or 0)
 	if not pm[ky] then pm[ky] = {} end
 	return pm[ky]
 end
-
 local function apm(plr, fact)
 	if not plr or not fact then return end
 	local cln = tostring(fact):gsub("^%s+", ""):gsub("%s+$", "")
@@ -91,15 +78,24 @@ local function apm(plr, fact)
 	table.insert(lst, cln)
 	while #lst > 8 do table.remove(lst, 1) end
 end
-
 local function emf(msg)
 	if not msg then return nil end
 	local lo  = string.lower(msg)
 	local ptns = {
-		"remember that ", "remember ", "note that ",
-		"my favorite ", "i like ", "i love ", "my name is ",
-		"i am ", "i play ", "i enjoy ", "i hate ",
-		"i want ", "i live in ", "i have a favorite "
+		"remember that ",
+		"remember ",
+		"note that ",
+		"my favorite ",
+		"i like ",
+		"i love ",
+		"my name is ",
+		"i am ",
+		"i play ",
+		"i enjoy ",
+		"i hate ",
+		"i want ",
+		"i live in ",
+		"i have a favorite "
 	}
 	for _, ptn in ipairs(ptns) do
 		local idx = string.find(lo, ptn, 1, true)
@@ -110,7 +106,6 @@ local function emf(msg)
 	end
 	return nil
 end
-
 local function bpmt(plr)
 	local lst = gml(plr)
 	if not lst or #lst == 0 then return "No stored memories for this player." end
@@ -118,21 +113,17 @@ local function bpmt(plr)
 	for _, mem in ipairs(lst) do table.insert(lns, "- " .. mem) end
 	return "Player memory:\n" .. table.concat(lns, "\n")
 end
-
--- ─── Server chat history ─────────────────────────────────────────────────────
-
 local function ash(plr, tx)
 	local cln = tostring(tx):gsub("^%s+", ""):gsub("%s+$", "")
 	if cln == "" then return end
 	table.insert(sch, {
 		playerName = plr and (plr.DisplayName or plr.Name or "Unknown") or "Unknown",
-		username   = plr and (plr.Name        or "Unknown") or "Unknown",
-		userId     = plr and (plr.UserId       or 0)        or 0,
-		text       = cln
+		username = plr and (plr.Name or "Unknown") or "Unknown",
+		userId = plr and (plr.UserId or 0) or 0,
+		text = cln
 	})
 	while #sch > MSH do table.remove(sch, 1) end
 end
-
 local function bshp()
 	if #sch == 0 then return "Server chat history: none yet." end
 	local lns = { "Server chat history:" }
@@ -144,20 +135,16 @@ local function bshp()
 	end
 	return table.concat(lns, "\n")
 end
-
--- ─── Game info ───────────────────────────────────────────────────────────────
-
 pcall(function()
 	local i = mps:GetProductInfo(pid)
 	if i then
-		gnm = i.Name        or gnm
+		gnm = i.Name or gnm
 		gds = i.Description or gds
-		cnm = i.Creator and i.Creator.Name            or cnm
+		cnm = i.Creator and i.Creator.Name or cnm
 		cid = i.Creator and i.Creator.CreatorTargetId or cid
 		isg = i.Creator and i.Creator.CreatorType == Enum.CreatorType.Group
 	end
 end)
-
 local pr = string.format([[
 You are a helpful and fun Roblox chatbot inside a game.
 You have a message limit of 200 characters so use them correctly and be friendly.
@@ -173,7 +160,6 @@ Game Information:
 - Players Currently in Server: %d
 Use this information when players ask about the game.
 ]], gnm, gds, pid, uid, cnm, isg and "Group" or "User", cid, mxp, plg)
-
 local tps = {
 	"Come close to me and just talk normally!",
 	"If you're far away, type " .. c .. "then your message.",
@@ -181,9 +167,6 @@ local tps = {
 	"Far away? Use " .. c .. "before your message.",
 	"Near me means no command needed. Far away means use " .. c
 }
-
--- ─── Character / movement ────────────────────────────────────────────────────
-
 local b = lp.Character
 local hum, hrp
 if b then
@@ -196,24 +179,20 @@ lp.CharacterAdded:Connect(function(chr)
 	hum = b:FindFirstChildOfClass("Humanoid")
 	hrp = b:FindFirstChild("HumanoidRootPart")
 end)
-
 local sp = hrp and hrp.Position or Vector3.new(0, 5, 0)
 local function gp()
 	if hrp then return hrp.Position end
 	return sp
 end
-
--- ─── HTTP request wrapper ────────────────────────────────────────────────────
-
 local function gr()
-	if typeof(request)       == "function" then return request end
-	if syn and typeof(syn.request)         == "function" then return syn.request end
-	if http and typeof(http.request)       == "function" then return http.request end
-	if typeof(http_request)  == "function" then return http_request end
-	if fluxus and typeof(fluxus.request)   == "function" then return fluxus.request end
-	if typeof(game.HttpGet)  == "function" or typeof(game.HttpGetAsync) == "function" then
+	if typeof(request) == "function" then return request end
+	if syn and typeof(syn.request) == "function" then return syn.request end
+	if http and typeof(http.request) == "function" then return http.request end
+	if typeof(http_request) == "function" then return http_request end
+	if fluxus and typeof(fluxus.request) == "function" then return fluxus.request end
+	if typeof(game.HttpGet) == "function" or typeof(game.HttpGetAsync) == "function" then
 		return function(o)
-			local u   = o.Url or o.url
+			local u = o.Url or o.url
 			local mth = tostring(o.Method or o.method or "GET"):upper()
 			if mth == "POST" and typeof(game.HttpPost) == "function" then
 				return { StatusCode = 200, Body = game:HttpPost(u, o.Body or o.body or "", true) }
@@ -226,9 +205,6 @@ local function gr()
 	error("No usable request function found - your executor may be blocking HTTP")
 end
 local rq = gr()
-
--- ─── Chat helper ─────────────────────────────────────────────────────────────
-
 local function ch(msg)
 	local chn = t.TextChannels:FindFirstChild("RBXGeneral")
 	if chn then
@@ -242,9 +218,6 @@ local function ch(msg)
 		end
 	end
 end
-
--- ─── Build context string ────────────────────────────────────────────────────
-
 local function bcc(spk)
 	rpn()
 	local pls = table.concat(gpl(), ", ")
@@ -252,9 +225,9 @@ local function bcc(spk)
 	local mem = "No stored memories for this player."
 	if spk then
 		mem = bpmt(spk)
-		local dn   = spk.DisplayName or spk.Name or "Unknown"
-		local un   = spk.Name        or "Unknown"
-		local uid2 = spk.UserId      or 0
+		local dn = spk.DisplayName or spk.Name or "Unknown"
+		local un = spk.Name or "Unknown"
+		local uid2 = spk.UserId or 0
 		return string.format(
 			"Speaker details: display name=%s, username=%s, userId=%d\nPlayer memory:\n%s\nCurrent server players: %s\n\n%s\n\n",
 			dn, un, uid2, mem, pls, bshp()
@@ -262,32 +235,22 @@ local function bcc(spk)
 	end
 	return "Player memory:\n" .. mem .. "\nCurrent server players: " .. pls .. "\n\n" .. bshp() .. "\n\n"
 end
-
--- ─── Fallback model list ─────────────────────────────────────────────────────
-
 local FBM = {
 	"gemini-flash-latest",
 	"gemini-flash-lite-latest",
 }
-
--- ─── Gemini API query ────────────────────────────────────────────────────────
-
 local function aq(txt, spk)
 	if not k or k == "" then return "Gemini API key missing." end
-
 	local function clm(mdl)
 		return tostring(mdl or ""):gsub('[%s"\']', "")
 	end
-
 	local mdl = clm(m)
 	if mdl == "" then mdl = "gemini-flash-latest" end
 	if not mdl:match("^[%w%.%-]+$") then
 		return "Invalid model name, check your AIModel setting"
 	end
-
 	local pt = bcc(spk) .. txt
 	local mt = tonumber(tk) or 200
-
 	local function bb(model)
 		local bd = {
 			model    = model,
@@ -310,18 +273,15 @@ local function aq(txt, spk)
 		if re then bd.reasoning_effort = re end
 		return bd
 	end
-
 	local hdrs = {
 		["Content-Type"]  = "application/json",
 		["Authorization"] = "Bearer " .. tostring(k),
 		["x-goog-api-key"] = tostring(k),
 	}
-
 	local function snd(model, bd)
 		local js = h:JSONEncode(bd)
 		local u  = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 		warn("Debug AI: calling " .. model .. " via [" .. u .. "]")
-
 		local attempts = {
 			function()
 				return rq({ Url = u, url = u, uri = u, Method = "POST", method = "POST", Headers = hdrs, headers = hdrs, Body = js, body = js })
@@ -337,14 +297,13 @@ local function aq(txt, spk)
 				return { StatusCode = 200, Body = game:HttpPost(u, js, true) }
 			end,
 		}
-
 		local lastErr = "unknown"
 		for i, fn in ipairs(attempts) do
 			local ok, res = pcall(fn)
 			if ok and res then
 				local rb = type(res.Body)  == "string" and res.Body
-					or     (type(res.body) == "string" and res.body)
-					or     h:JSONEncode(res.Body or res.body or {})
+					or (type(res.body) == "string" and res.body)
+					or h:JSONEncode(res.Body or res.body or {})
 				local dok, d = pcall(function() return h:JSONDecode(rb) end)
 				if dok then
 					warn("Debug AI: transport " .. i .. " worked")
@@ -357,15 +316,12 @@ local function aq(txt, spk)
 		end
 		return nil, lastErr
 	end
-
-	-- Try primary model, then fallbacks
 	local att = {}
 	local function trm(model)
 		if att[model] then return nil, nil end
 		att[model] = true
 		return snd(model, bb(model))
 	end
-
 	local d, er = trm(mdl)
 	if not d then
 		for _, fb in ipairs(FBM) do
@@ -374,25 +330,17 @@ local function aq(txt, spk)
 			if e2 then er = e2 end
 		end
 	end
-
-	-- Retry without reasoning_effort if that was the problem
 	if not d and er and (er:lower():find("reasoning") or er:lower():find("effort")) then
 		local bd = bb(mdl)
 		bd.reasoning_effort = nil
 		d, er = snd(mdl, bd)
 	end
-
-	-- ── Parse response ──────────────────────────────────────────────────────
-
 	if not d then
 		return "Gemini request failed: " .. tostring(er)
 	end
-
 	if d.error then
 		return "Gemini error: " .. tostring(d.error.message or d.error.code or "unknown")
 	end
-
-	-- Guard: choices must exist and be non-empty
 	if type(d.choices) ~= "table" or #d.choices == 0 then
 		if d.promptFeedback then
 			return "Blocked by safety filter: " .. tostring(d.promptFeedback.blockReason or "unknown")
@@ -400,20 +348,15 @@ local function aq(txt, spk)
 		warn("Debug AI: empty choices – full response: " .. h:JSONEncode(d))
 		return "No reply from Gemini."
 	end
-
 	local choice = d.choices[1]
 	if not choice or type(choice) ~= "table" then
 		return "Malformed choice from Gemini."
 	end
-
 	local msg2 = choice.message
 	if not msg2 or type(msg2) ~= "table" then
 		return "No message in Gemini choice."
 	end
-
 	local tx = msg2.content
-
-	-- content can be a string OR an array of {type="text", text="..."} parts
 	if type(tx) == "table" then
 		local parts = {}
 		for _, part in ipairs(tx) do
@@ -425,28 +368,20 @@ local function aq(txt, spk)
 		end
 		tx = table.concat(parts, " ")
 	end
-
 	if type(tx) == "string" then
 		tx = tx:gsub("%*+", ""):gsub("`+", "")
 		tx = tx:gsub("^%s+", ""):gsub("%s+$", "")
 		if tx ~= "" then return tx end
 	end
-
 	return "Empty reply (finish_reason: " .. tostring(choice.finish_reason or "none") .. ")"
 end
-
--- ─── Proximity check ─────────────────────────────────────────────────────────
-
 local function nr(plr)
 	local chr = plr.Character
 	if not chr then return false end
-	local rt  = chr:FindFirstChild("HumanoidRootPart")
-	if not rt  then return false end
+	local rt = chr:FindFirstChild("HumanoidRootPart")
+	if not rt then return false end
 	return (rt.Position - gp()).Magnitude <= r
 end
-
--- ─── Tip broadcast loop ──────────────────────────────────────────────────────
-
 task.spawn(function()
 	while true do
 		task.wait(10)
@@ -455,30 +390,24 @@ task.spawn(function()
 		end
 	end
 end)
-
--- ─── Pathfinding helpers ─────────────────────────────────────────────────────
-
 local function pwg()
 	return sp + Vector3.new(math.random(-wd, wd), 0, math.random(-wd, wd))
 end
-
 local function cwp(fr, gl)
 	local pth = pfs:CreatePath({
-		AgentRadius  = 2,
-		AgentHeight  = 5,
+		AgentRadius = 2,
+		AgentHeight = 5,
 		AgentCanJump = true,
 	})
 	local ok = pcall(function() pth:ComputeAsync(fr, gl) end)
 	if ok and pth.Status == Enum.PathStatus.Success then return pth, true end
 	return pth, false
 end
-
 local function fp(pth)
 	local wps = pth:GetWaypoints()
 	for _, wp in ipairs(wps) do
 		if not hum or not hum.Parent or hum.Health <= 0 then return false end
 		if not hrp or not hrp.Parent then return false end
-
 		hum:MoveTo(wp.Position)
 		if wp.Action == Enum.PathWaypointAction.Jump then hum.Jump = true end
 		if hum.Sit then
@@ -487,7 +416,6 @@ local function fp(pth)
 				if hum then hum.Jump = true; hum.Sit = false end
 			end)
 		end
-
 		local tm, rch = 0, false
 		while tm < 2 do
 			if not hum or not hum.Parent or hum.Health <= 0 then return false end
@@ -499,7 +427,6 @@ local function fp(pth)
 			if (now - cur).Magnitude > math.max(hum.WalkSpeed, 30) * dt + 15 then break end
 			tm += dt
 		end
-
 		if not rch then
 			if hum then hum.Jump = true end
 			return false
@@ -507,9 +434,6 @@ local function fp(pth)
 	end
 	return true
 end
-
--- ─── Wandering loop ──────────────────────────────────────────────────────────
-
 if wnd and hum and hrp then
 	task.spawn(function()
 		while true do
@@ -532,29 +456,23 @@ if wnd and hum and hrp then
 		end
 	end)
 end
-
--- ─── Message handler ─────────────────────────────────────────────────────────
-
 t.MessageReceived:Connect(function(msg)
 	if not msg.TextSource then return end
 	local spk = p:GetPlayerByUserId(msg.TextSource.UserId)
 	if not spk then return end
 	kn[tostring(spk.UserId)] = spk.Name
-
-	local txt  = msg.Text
-	local has  = string.sub(txt, 1, #c) == c
-	local inr  = nr(spk)
-	local dor  = false
-	local q    = txt
-
+	local txt = msg.Text
+	local has = string.sub(txt, 1, #c) == c
+	local inr = nr(spk)
+	local dor = false
+	local q = txt
 	if inr then
 		dor = true
 		if has then q = string.sub(txt, #c + 1):gsub("^%s+", "") end
 	elseif has then
 		dor = true
-		q   = string.sub(txt, #c + 1):gsub("^%s+", "")
+		q = string.sub(txt, #c + 1):gsub("^%s+", "")
 	end
-
 	if dor and q ~= "" and spk ~= lp and not bs then
 		local mf = emf(q)
 		if mf then apm(spk, mf) end
@@ -566,7 +484,6 @@ t.MessageReceived:Connect(function(msg)
 		bs = false
 	end
 end)
-
 print("[Range AI Bot] Loaded!")
 print("Model:", m)
 print("Game:", gnm)
