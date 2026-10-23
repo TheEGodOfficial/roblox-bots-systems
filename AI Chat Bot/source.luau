@@ -335,7 +335,7 @@ local function aq(txt, spk)
 	local function snd(mdl, bd)
 		local js = h:JSONEncode(bd)
 		local u = "https://generativelanguage.googleapis.com/v1beta/models/" .. mdl .. ":generateContent"
-		print("Debug AI: calling " .. mdl)
+		warn("Debug AI: calling " .. mdl)
 		local opt = {
 			Url = u,         url = u,
 			Method = "POST", method = "POST",
