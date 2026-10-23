@@ -522,19 +522,23 @@ local function startAutoJump()
 		local forward = cf.LookVector
 		local pos = hrp.Position
 		local hit = false
-		-- low ray: catches fences, ledges, small walls (from ankle height)
-		local lowOrigin = pos - Vector3.new(0, 1.5, 0)
-		if ws:Raycast(lowOrigin, forward * 3, rayParams) then hit = true end
-		-- mid ray: catches taller obstacles at torso height
-		if not hit then
-			if ws:Raycast(pos, forward * 3, rayParams) then hit = true end
+		local offsets = { -2.8, -2.2, -1.5, -0.8, 0, 0.6 }
+		for _, yOff in ipairs(offsets) do
+			local origin = pos + Vector3.new(0, yOff, 0)
+			if ws:Raycast(origin, forward * 3.5, rayParams) then
+				hit = true
+				break
+			end
 		end
-		-- diagonal down-forward: catches when bot is on top of something uneven and about to get stuck
 		if not hit then
-			local diagDir = (forward + Vector3.new(0, -0.6, 0)).Unit * 3
-			local diagOrigin = pos + Vector3.new(0, 1, 0)
-			local res = ws:Raycast(diagOrigin, diagDir, rayParams)
+			local diagDir = (forward + Vector3.new(0, -0.5, 0)).Unit * 3.5
+			local res = ws:Raycast(pos + Vector3.new(0, 0.5, 0), diagDir, rayParams)
 			if res and res.Normal.Y < 0.7 then hit = true end
+		end
+		if not hit then
+			local upDir = (forward + Vector3.new(0, 0.4, 0)).Unit * 3.5
+			local groundOrigin = pos - Vector3.new(0, 2.5, 0)
+			if ws:Raycast(groundOrigin, upDir, rayParams) then hit = true end
 		end
 		if hit then
 			hum.Jump = true
