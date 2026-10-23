@@ -135,93 +135,81 @@ local function ch(msg)
 	end
 end
 local function ask(txt)
-	local key = env.APIKey
-	local model = env.AIModel or "nvidia/nemotron-3.5-super-vl:free"
+	local key = env.GeminiKey or env.APIKey
+	local model = env.AIModel or "gemini-2.0-flash"
 	if not key or key == "" then
-		return "OpenRouter API key missing."
+		return "Gemini API key missing."
 	end
+
 	local body = {
-		model = model,
-		messages = {
-			{ role = "system", content = pr },
-			{ role = "user", content = txt }
+		systemInstruction = {
+			parts = {
+				{ text = pr }
+			}
 		},
-		max_tokens = tonumber(tk) or 200,
-		temperature = 0.7
+		contents = {
+			{
+				role = "user",
+				parts = {
+					{ text = txt }
+				}
+			}
+		},
+		generationConfig = {
+			maxOutputTokens = tonumber(tk) or 200,
+			temperature = 0.7,
+			topP = 0.9
+		}
 	}
+
 	local ok, res = pcall(function()
 		return rq({
-			Url = "https://openrouter.ai/api/v1/chat/completions",
+			Url = "https://generativelanguage.googleapis.com/v1beta/models/" .. model .. ":generateContent?key=" .. key,
 			Method = "POST",
 			Headers = {
-				["Content-Type"] = "application/json",
-				["Authorization"] = "Bearer " .. key,
-				["HTTP-Referer"] = "https://roblox.com",
-				["X-Title"] = "Roblox Range AI Bot"
+				["Content-Type"] = "application/json"
 			},
 			Body = h:JSONEncode(body)
 		})
 	end)
+
 	if not ok or not res then
 		return "Request failed: " .. tostring(res)
 	end
+
 	local responseText = type(res.Body) == "string" and res.Body or h:JSONEncode(res.Body or {})
-	local decoded
-	local decodeOkay, decodedData = pcall(function()
+	local decodeOkay, data = pcall(function()
 		return h:JSONDecode(responseText)
 	end)
+
 	if not decodeOkay then
-		return "Invalid JSON reply from OpenRouter."
+		return "Invalid JSON reply from Gemini."
 	end
-	local data = decodedData
+
 	if data and data.error then
-		return "OpenRouter error: " .. tostring(data.error.message or data.error.code or "unknown")
+		return "Gemini error: " .. tostring(data.error.message or data.error.code or "unknown")
 	end
-	local function getMessageText(msg)
-		if type(msg) ~= "table" then
-			return nil
-		end
-		-- direct string
-		if type(msg.content) == "string" and msg.content ~= "" then
-			return msg.content
-		end
-		-- array of content parts
-		if type(msg.content) == "table" then
-			local parts = {}
-			for _, part in ipairs(msg.content) do
-				if type(part) == "table" then
-					local text = part.text or part.content or part.value
-					if type(text) == "string" and text ~= "" then
-						table.insert(parts, text)
-					end
+
+	if data and data.candidates and data.candidates[1] then
+		local candidate = data.candidates[1]
+		local parts = candidate and candidate.content and candidate.content.parts
+		if type(parts) == "table" then
+			local out = {}
+			for _, part in ipairs(parts) do
+				if type(part) == "table" and type(part.text) == "string" and part.text ~= "" then
+					table.insert(out, part.text)
 				end
 			end
-			if #parts > 0 then
-				return table.concat(parts, "\n")
+			local text = table.concat(out, "\n")
+			if text ~= "" then
+				return text:gsub("^%s+", ""):gsub("%s+$", "")
 			end
 		end
-		-- some models put result in text or reasoning
-		if type(msg.text) == "string" and msg.text ~= "" then
-			return msg.text
-		end
-		if type(msg.reasoning) == "string" and msg.reasoning ~= "" then
-			return msg.reasoning
-		end
-
-		return nil
-	end
-	if data and data.choices and data.choices[1] then
-		local choice = data.choices[1]
-		local text = getMessageText(choice.message)
-
-		if text then
-			return text:gsub("^%s+", ""):gsub("%s+$", "")
-		end
-		-- fallback: some responses use choice.text
-		if type(choice.text) == "string" and choice.text ~= "" then
-			return choice.text
+		if type(candidate.text) == "string" and candidate.text ~= "" then
+			return candidate.text:gsub("^%s+", ""):gsub("%s+$", "")
 		end
 	end
+
 	return "No valid reply received."
 end
 local function nr(plr)
