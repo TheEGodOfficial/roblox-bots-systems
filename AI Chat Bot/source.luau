@@ -489,10 +489,14 @@ local function stopUnseat()
 	end
 end
 
+local currentWpTarget = nil
+
 local function startAutoJump()
 	if autoJumpConn then autoJumpConn:Disconnect() end
 	local lastPos = hrp and hrp.Position or Vector3.zero
+	local lastDistToTarget = math.huge
 	local stuckFor = 0
+	local noProgressFor = 0
 	autoJumpConn = rs.Heartbeat:Connect(function(dt)
 		if not hum or not hum.Parent or not hrp or not hrp.Parent then
 			autoJumpConn:Disconnect()
@@ -502,14 +506,27 @@ local function startAutoJump()
 		local now = hrp.Position
 		local moved = (now - lastPos).Magnitude
 		lastPos = now
-		if hum.MoveDirection.Magnitude > 0.1 and moved < hum.WalkSpeed * dt * 0.35 then
+		local isMoving = hum.MoveDirection.Magnitude > 0.1
+		if isMoving and moved < hum.WalkSpeed * dt * 0.35 then
 			stuckFor += dt
 		else
 			stuckFor = 0
 		end
-		if stuckFor >= 0.45 then
+		if currentWpTarget then
+			local distNow = (now - currentWpTarget).Magnitude
+			if isMoving and distNow >= lastDistToTarget - 0.05 then
+				noProgressFor += dt
+			else
+				noProgressFor = 0
+			end
+			lastDistToTarget = distNow
+		else
+			noProgressFor = 0
+		end
+		if stuckFor >= 0.45 or noProgressFor >= 0.6 then
 			hum.Jump = true
 			stuckFor = 0
+			noProgressFor = 0
 		end
 	end)
 end
@@ -530,6 +547,7 @@ local function fp(pth)
 	for i, wp in ipairs(wps) do
 		if not hum or not hum.Parent or hum.Health <= 0 then stopAutoJump(); return false end
 		if not hrp or not hrp.Parent then stopAutoJump(); return false end
+		currentWpTarget = wp.Position
 		hum:MoveTo(wp.Position)
 		if wp.Action == Enum.PathWaypointAction.Jump then
 			hum.Jump = true
@@ -570,6 +588,7 @@ local function fp(pth)
 			return false
 		end
 	end
+	currentWpTarget = nil
 	stopAutoJump()
 	return true
 end
