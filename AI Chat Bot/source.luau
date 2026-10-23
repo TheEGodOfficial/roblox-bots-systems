@@ -335,25 +335,49 @@ local function aq(txt, spk)
 	local function snd(mdl, bd)
 		local js = h:JSONEncode(bd)
 		local u = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-		warn("Debug AI: calling " .. mdl)
-		local opt = {
-			Url = u,         url = u,
-			Method = "POST", method = "POST",
-			Headers = hdrs,  headers = hdrs,
-			Body = js,       body = js,
+		warn("Debug AI: calling " .. mdl .. " via [" .. u .. "]")
+
+		local attempts = {
+			function()
+				return rq({
+					Url = u, url = u, uri = u,
+					Method = "POST", method = "POST",
+					Headers = hdrs, headers = hdrs,
+					Body = js, body = js,
+				})
+			end,
+			function()
+				return rq({ Url = u, Method = "POST", Headers = hdrs, Body = js })
+			end,
+			function()
+				local r2 = hs:RequestAsync({ Url = u, Method = "POST", Headers = hdrs, Body = js })
+				return { StatusCode = r2.StatusCode, Body = r2.Body }
+			end,
+			function()
+				return { StatusCode = 200, Body = game:HttpPost(u, js, true) }
+			end,
 		}
-		local ok, res = pcall(function()
-			return rq(opt)
-		end)
-		if not ok or not res then return nil, tostring(res) end
-		local rb = type(res.Body) == "string" and res.Body
-			or (type(res.body) == "string" and res.body)
-			or h:JSONEncode(res.Body or res.body or {})
-		local dok, d = pcall(function()
-			return h:JSONDecode(rb)
-		end)
-		if not dok then return nil, "Invalid JSON reply from Gemini" end
-		return d, nil
+
+		local lastErr = "unknown"
+		for i, fn in ipairs(attempts) do
+			local ok, res = pcall(fn)
+			if ok and res then
+				local rb = type(res.Body) == "string" and res.Body
+					or (type(res.body) == "string" and res.body)
+					or h:JSONEncode(res.Body or res.body or {})
+				local dok, d = pcall(function()
+					return h:JSONDecode(rb)
+				end)
+				if dok then
+					warn("Debug AI: transport " .. i .. " worked")
+					return d, nil
+				end
+			elseif not ok then
+				lastErr = tostring(res)
+				warn("Debug AI: transport " .. i .. " failed: " .. lastErr)
+			end
+		end
+		return nil, lastErr
 	end
 
 	local att = {}
