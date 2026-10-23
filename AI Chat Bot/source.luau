@@ -40,11 +40,14 @@ local function refreshPlayerNames()
 	end
 end
 
-local function getCurrentPlayerNameList()
+local function getCurrentPlayerSummaryList()
 	local names = {}
 	for _, pl in ipairs(p:GetPlayers()) do
-		if pl and pl.Name then
-			table.insert(names, pl.Name)
+		if pl then
+			local disp = pl.DisplayName or pl.Name or "Unknown"
+			local nick = pl.Name or "Unknown"
+			local id = pl.UserId or 0
+			table.insert(names, string.format("%s (%s) [UserId: %d]", disp, nick, id))
 		end
 	end
 	table.sort(names)
@@ -157,15 +160,23 @@ local function ch(msg)
 end
 local function buildChatContext(speaker)
 	refreshPlayerNames()
-	local currentNames = getCurrentPlayerNameList()
-	local playerString = table.concat(currentNames, ", ")
+	local playerString = table.concat(getCurrentPlayerSummaryList(), ", ")
 	if playerString == "" then
 		playerString = "No other players currently in server"
 	end
-	if speaker and speaker.Name then
-		return "Speaker name: " .. speaker.Name .. "\nCurrent server player names: " .. playerString .. "\n\n"
+	if speaker then
+		local dname = speaker.DisplayName or speaker.Name or "Unknown"
+		local uname = speaker.Name or "Unknown"
+		local uidVal = speaker.UserId or 0
+		return string.format(
+			"Speaker details: display name=%s, username=%s, userId=%d\nCurrent server players: %s\n\n",
+			dname,
+			uname,
+			uidVal,
+			playerString
+		)
 	end
-	return "Current server player names: " .. playerString .. "\n\n"
+	return "Current server players: " .. playerString .. "\n\n"
 end
 local function ask(txt, speaker)
 	local key = env.GeminiKey or env.APIKey
