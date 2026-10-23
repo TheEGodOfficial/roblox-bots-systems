@@ -135,64 +135,94 @@ local function ch(msg)
 	end
 end
 local function ask(txt)
-    local key = env.APIKey
-    local model = env.AIModel or "nvidia/nemotron-3.5-super-vl:free"
-    if not key or key == "" then
-        return "OpenRouter API key missing."
-    end
-    local body = {
-        model = model,
-        messages = {
-            { role = "system", content = pr },
-            { role = "user", content = txt }
-        },
-        max_tokens = tonumber(tk) or 200,
-        temperature = 0.7
-    }
-    local ok, res = pcall(function()
-        return rq({
-            Url = "https://openrouter.ai/api/v1/chat/completions",
-            Method = "POST",
-            Headers = {
-                ["Content-Type"] = "application/json",
-                ["Authorization"] = "Bearer " .. key,
-                ["HTTP-Referer"] = "https://roblox.com",
-                ["X-Title"] = "Roblox Range AI Bot"
-            },
-            Body = h:JSONEncode(body)
-        })
-    end)
-    if not ok or not res then
-        return "Request failed: " .. tostring(res)
-    end
-    local responseText = type(res.Body) == "string" and res.Body or h:JSONEncode(res.Body or {})
-    local data
-    local decodeOkay, decoded = pcall(function()
-        return h:JSONDecode(responseText)
-    end)
-    if not decodeOkay then
-        return "Invalid JSON reply from OpenRouter."
-    end
-    data = decoded
-    if data and data.error then
-        return "OpenRouter error: " .. tostring(data.error.message or data.error.code or "unknown")
-    end
-    if data and data.choices and data.choices[1] and data.choices[1].message then
-        local content = data.choices[1].message.content
-        if type(content) == "table" then
-            local parts = {}
-            for _, part in ipairs(content) do
-                if part and part.type == "text" then
-                    table.insert(parts, part.text)
-                end
-            end
-            content = table.concat(parts, "\n")
-        end
-        if type(content) == "string" then
-            return content
-        end
-    end
-    return "No valid reply received."
+	local key = env.APIKey
+	local model = env.AIModel or "nvidia/nemotron-3.5-super-vl:free"
+	if not key or key == "" then
+		return "OpenRouter API key missing."
+	end
+	local body = {
+		model = model,
+		messages = {
+			{ role = "system", content = pr },
+			{ role = "user", content = txt }
+		},
+		max_tokens = tonumber(tk) or 200,
+		temperature = 0.7
+	}
+	local ok, res = pcall(function()
+		return rq({
+			Url = "https://openrouter.ai/api/v1/chat/completions",
+			Method = "POST",
+			Headers = {
+				["Content-Type"] = "application/json",
+				["Authorization"] = "Bearer " .. key,
+				["HTTP-Referer"] = "https://roblox.com",
+				["X-Title"] = "Roblox Range AI Bot"
+			},
+			Body = h:JSONEncode(body)
+		})
+	end)
+	if not ok or not res then
+		return "Request failed: " .. tostring(res)
+	end
+	local responseText = type(res.Body) == "string" and res.Body or h:JSONEncode(res.Body or {})
+	local decoded
+	local decodeOkay, decodedData = pcall(function()
+		return h:JSONDecode(responseText)
+	end)
+	if not decodeOkay then
+		return "Invalid JSON reply from OpenRouter."
+	end
+	local data = decodedData
+	if data and data.error then
+		return "OpenRouter error: " .. tostring(data.error.message or data.error.code or "unknown")
+	end
+	local function getMessageText(msg)
+		if type(msg) ~= "table" then
+			return nil
+		end
+		-- direct string
+		if type(msg.content) == "string" and msg.content ~= "" then
+			return msg.content
+		end
+		-- array of content parts
+		if type(msg.content) == "table" then
+			local parts = {}
+			for _, part in ipairs(msg.content) do
+				if type(part) == "table" then
+					local text = part.text or part.content or part.value
+					if type(text) == "string" and text ~= "" then
+						table.insert(parts, text)
+					end
+				end
+			end
+			if #parts > 0 then
+				return table.concat(parts, "\n")
+			end
+		end
+		-- some models put result in text or reasoning
+		if type(msg.text) == "string" and msg.text ~= "" then
+			return msg.text
+		end
+		if type(msg.reasoning) == "string" and msg.reasoning ~= "" then
+			return msg.reasoning
+		end
+
+		return nil
+	end
+	if data and data.choices and data.choices[1] then
+		local choice = data.choices[1]
+		local text = getMessageText(choice.message)
+
+		if text then
+			return text:gsub("^%s+", ""):gsub("%s+$", "")
+		end
+		-- fallback: some responses use choice.text
+		if type(choice.text) == "string" and choice.text ~= "" then
+			return choice.text
+		end
+	end
+	return "No valid reply received."
 end
 local function nr(plr)
 	local char = plr.Character
