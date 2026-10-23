@@ -4,8 +4,6 @@ MIT License
 Copyright (c) 2026 E God/Fred
 ]]
 
-
-
 local lp = game:GetService("Players").LocalPlayer
 
 local APIKey = "\65\81\46\65\98\56\82\78\54\73\99\89\95\102\112\68\90\86\57\70\55\67\66\54\78\90\95\49\50\54\115\101\112\112\69\50\85\106\105\71\104\55\75\72\54\82\75\118\100\115\57\69\103\10" -- do not touch please
