@@ -1,6 +1,5 @@
 --[[
 MIT License
-
 Copyright (c) 2026 E God/Fred
 ]]
 
@@ -493,40 +492,24 @@ local currentWpTarget = nil
 
 local function startAutoJump()
 	if autoJumpConn then autoJumpConn:Disconnect() end
-	local lastPos = hrp and hrp.Position or Vector3.zero
-	local lastDistToTarget = math.huge
-	local stuckFor = 0
-	local noProgressFor = 0
+	local jumpCooldown = 0
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
 	autoJumpConn = rs.Heartbeat:Connect(function(dt)
 		if not hum or not hum.Parent or not hrp or not hrp.Parent then
 			autoJumpConn:Disconnect()
 			autoJumpConn = nil
 			return
 		end
-		local now = hrp.Position
-		local moved = (now - lastPos).Magnitude
-		lastPos = now
-		local isMoving = hum.MoveDirection.Magnitude > 0.1
-		if isMoving and moved < hum.WalkSpeed * dt * 0.35 then
-			stuckFor += dt
-		else
-			stuckFor = 0
-		end
-		if currentWpTarget then
-			local distNow = (now - currentWpTarget).Magnitude
-			if isMoving and distNow >= lastDistToTarget - 0.05 then
-				noProgressFor += dt
-			else
-				noProgressFor = 0
-			end
-			lastDistToTarget = distNow
-		else
-			noProgressFor = 0
-		end
-		if stuckFor >= 0.45 or noProgressFor >= 0.6 then
+		jumpCooldown = math.max(0, jumpCooldown - dt)
+		if hum.MoveDirection.Magnitude <= 0.1 then return end
+		rayParams.FilterDescendantsInstances = { b }
+		local origin = hrp.Position
+		local forward = hrp.CFrame.LookVector
+		local result = game:GetService("Workspace"):Raycast(origin, forward * 3.5, rayParams)
+		if result and jumpCooldown <= 0 then
 			hum.Jump = true
-			stuckFor = 0
-			noProgressFor = 0
+			jumpCooldown = 0.4
 		end
 	end)
 end
@@ -547,7 +530,6 @@ local function fp(pth)
 	for i, wp in ipairs(wps) do
 		if not hum or not hum.Parent or hum.Health <= 0 then stopAutoJump(); return false end
 		if not hrp or not hrp.Parent then stopAutoJump(); return false end
-		currentWpTarget = wp.Position
 		hum:MoveTo(wp.Position)
 		if wp.Action == Enum.PathWaypointAction.Jump then
 			hum.Jump = true
@@ -588,7 +570,6 @@ local function fp(pth)
 			return false
 		end
 	end
-	currentWpTarget = nil
 	stopAutoJump()
 	return true
 end
