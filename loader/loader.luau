@@ -103,7 +103,7 @@ local acbbtn = acbgb:CreateButton({
         if APIKey == nil or APIKey == "" then
             local ntf = win:PromptDialog({
                 Name = "No API Key",
-                Content = "No API Key provided from openrouter.ai",
+                Content = "No API Key provided from aistudio.google.com/app/apikey",
                 Type = 2,
             })
         else
@@ -136,7 +136,7 @@ local acbgb2 = acbtb:CreateGroupbox({
 local acbak = acbgb2:CreateInput({
     Name = "API Key",
     CurrentValue = "",
-    PlaceholderText = "Get at openrouter.ai",
+    PlaceholderText = "Get at aistudio.google.com/app/apikey",
     Enter = true,
     Callback = function(Text)
         APIKey = tostring(Text)
@@ -149,22 +149,15 @@ local acbl = acbgb2:CreateLabel({
 
 local acbam = acbl:AddDropdown({
 	Options = {
-		"nvidia/nemotron-3.5-super-vl:free",
-		"thinkingmachines/inkling:free",
-		"nvidia/nemotron-3-ultra-550b-a55b:free",
-		"nvidia/nemotron-3-super-120b-a12b:free",
-		"google/gemma-4-31b-it:free",
-		"xingchen-agi/xing4.0-29b-a4b:free",
-		"recursive/flint-v1.0:free",
-		"thinkingmachines/inkling-small:free",
-		"google/gemma-4-26b-a4b-it:free",
-		"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-		"cohere/north-mini-code:free",
-		"nvidia/nemotron-3.5-lightning:free",
-		"liquid/lfm-2.5-2.6b:free",
-		"nvidia/nemotron-3.5-content-safety:free",
-	},
-    CurrentOption = "nvidia/nemotron-3.5-super-vl:free",
+	    "gemini-2.0-flash",
+	    "gemini-2.5-flash",
+	    "gemini-2.5-flash-lite",
+	    "gemini-2.0-flash-lite",
+	    "gemini-1.5-flash",
+	    "gemini-1.5-flash-8b",
+	    "gemini-1.5-pro",
+	}
+    CurrentOption = "gemini-2.0-flash",
     PlaceholderText = "No AI Model",
     MultipleOptions = false,
     Callback = function(Options)
