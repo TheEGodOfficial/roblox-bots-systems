@@ -58,31 +58,31 @@ Copyright (c) 2026 E God/Fred
 ]]
 
 --[[
-	OpenRouter Range-Based AI Chatbot
+	Google Gemini Range-Based AI Chatbot
 
 	SETUP TUTORIAL:
 
-	1. Get a free OpenRouter API key
-	   - Go to https://openrouter.ai
-	   - Create an account / log in
-	   - Go to Keys and create a new key
-	   - Copy the key (starts with sk-or-v1-...)
+	1. Get a Gemini API key
+	   - Go to https://aistudio.google.com/app/apikey
+	   - Sign in with your Google account
+	   - Create a new API key
+	   - Copy the key
 
 	2. Paste your key
-	   - Find the line: env.APIKey = "sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxx"
+	   - Find the line: env.APIKey = "PASTE_YOUR_GEMINI_KEY_HERE"
 	   - Replace the whole string with your real key
 
 	3. Choose a free model (optional)
-	   - Find the line: env.AIModel = "minimax/minimax-m3.1-flash:free"
+	   - Find the line: env.AIModel = "gemini-2.0-flash"
 	   - Change it to any free model listed below
 
 	4. Optional settings you can change
 	   - env.ChatCommand = "/ai "          → command prefix when far away
-	   - env.TokenCount = 200            → max reply length
-	   - env.ChatRadius = 35              → talk range in studs
-	   - env.Wandering = true          → enable/disable wandering
-	   - env.WanderDistance = 40        → how far the bot wanders
-	   - env.WanderWait = 3         → seconds between wander moves
+	   - env.TokenCount = 200              → max reply length
+	   - env.ChatRadius = 35               → talk range in studs
+	   - env.Wandering = true             → enable/disable wandering
+	   - env.WanderDistance = 40          → how far the bot wanders
+	   - env.WanderWait = 3               → seconds between wander moves
 
 	5. How to run the script
 	   - This script is made for exploit executors (Synapse Z, Delta, Codex, Potassium, Volcano, Velocity, etc.)
@@ -97,29 +97,26 @@ Copyright (c) 2026 E God/Fred
 
 	AI MODELS:
 
-	FREE MODELS ON OPENROUTER (as of late October 2026)
+	FREE MODELS ON GOOGLE GEMINI (as of late October 2026)
 	Just change the env.AIModel variable to any of these:
 
-	"nvidia/nemotron-3.5-super-vl:free",
-	"thinkingmachines/inkling:free",
-	"nvidia/nemotron-3-ultra-550b-a55b:free",
-	"nvidia/nemotron-3-super-120b-a12b:free",
-	"google/gemma-4-31b-it:free",
-	"xingchen-agi/xing4.0-29b-a4b:free",
-	"recursive/flint-v1.0:free",
-	"thinkingmachines/inkling-small:free",
-	"google/gemma-4-26b-a4b-it:free",
-	"nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-	"cohere/north-mini-code:free",
-	"nvidia/nemotron-3.5-lightning:free",
-	"liquid/lfm-2.5-2.6b:free",
-	"nvidia/nemotron-3.5-content-safety:free",
+	"gemini-2.0-flash",
+	"gemini-2.5-flash",
+	"gemini-2.5-flash-lite",
+	"gemini-2.0-flash-lite",
+	"gemini-1.5-flash",
+	"gemini-1.5-flash-8b",
+	"gemini-1.5-pro",
+
+	NOTE:
+	- gemini-2.0-flash is the safest default choice for most Roblox bots
+	- free-tier model availability can vary by account and region
 ]]
 
 local env = (type(getgenv) == "function" and getgenv()) or shared or _G
 
-env.APIKey = "sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxx"
-env.AIModel = "minimax/minimax-m3.1-flash:free"
+env.APIKey = "PASTE_YOUR_GEMINI_KEY_HERE"
+env.AIModel = "gemini-2.0-flash"
 env.ChatCommand = "/ai "
 env.TokenCount = 200
 env.ChatRadius = 35
