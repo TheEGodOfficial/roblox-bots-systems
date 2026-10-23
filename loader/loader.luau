@@ -4,9 +4,9 @@ MIT License
 Copyright (c) 2026 E God/Fred
 ]]
 
-if not game:IsLoaded() then
-	game.Loaded:Wait()
-end
+repeat
+    task.wait(0.1)
+until game:IsLoaded()
 
 local lp = game:GetService("Players").LocalPlayer
 
