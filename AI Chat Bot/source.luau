@@ -520,25 +520,32 @@ local function startAutoJump()
 		rayParams.FilterDescendantsInstances = { b }
 		local cf = hrp.CFrame
 		local forward = cf.LookVector
+		local right = cf.RightVector
 		local pos = hrp.Position
 		local hit = false
-		local offsets = { -2.8, -2.2, -1.5, -0.8, 0, 0.6 }
-		for _, yOff in ipairs(offsets) do
-			local origin = pos + Vector3.new(0, yOff, 0)
-			if ws:Raycast(origin, forward * 3.5, rayParams) then
-				hit = true
-				break
+		local yOffsets = { -2.8, -2, -1.2, -0.4, 0.4, 1 }
+		local xOffsets = { -1.5, -0.75, 0, 0.75, 1.5 }
+		for _, xOff in ipairs(xOffsets) do
+			if hit then break end
+			local sideOffset = right * xOff
+			for _, yOff in ipairs(yOffsets) do
+				local origin = pos + sideOffset + Vector3.new(0, yOff, 0)
+				if ws:Raycast(origin, forward * 3.5, rayParams) then
+					hit = true
+					break
+				end
 			end
 		end
 		if not hit then
-			local diagDir = (forward + Vector3.new(0, -0.5, 0)).Unit * 3.5
-			local res = ws:Raycast(pos + Vector3.new(0, 0.5, 0), diagDir, rayParams)
-			if res and res.Normal.Y < 0.7 then hit = true end
-		end
-		if not hit then
-			local upDir = (forward + Vector3.new(0, 0.4, 0)).Unit * 3.5
-			local groundOrigin = pos - Vector3.new(0, 2.5, 0)
-			if ws:Raycast(groundOrigin, upDir, rayParams) then hit = true end
+			local probeOrigin = pos + forward * 3 + Vector3.new(0, 10, 0)
+			local downRes = ws:Raycast(probeOrigin, Vector3.new(0, -15, 0), rayParams)
+			local groundOrigin = pos + Vector3.new(0, 10, 0)
+			local groundRes = ws:Raycast(groundOrigin, Vector3.new(0, -15, 0), rayParams)
+			if downRes and groundRes then
+				if downRes.Position.Y - groundRes.Position.Y > 0.8 then
+					hit = true
+				end
+			end
 		end
 		if hit then
 			hum.Jump = true
