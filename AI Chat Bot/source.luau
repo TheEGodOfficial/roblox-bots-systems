@@ -6,6 +6,15 @@ Copyright (c) 2026 E God/Fred
 
 local env = (type(getgenv) == "function" and getgenv()) or shared or _G
 
+env.APIKey = env.APIKey or "PASTE_YOUR_GEMINI_KEY_HERE"
+env.AIModel = env.AIModel or "gemini-flash-latest"
+env.ChatCommand = env.ChatCommand or "/ai "
+env.TokenCount = env.TokenCount or 200
+env.ChatRadius = env.ChatRadius or 35
+env.Wandering = env.Wandering ~= false
+env.WanderDistance = env.WanderDistance or 40
+env.WanderWait = env.WanderWait or 3
+
 local p = game:GetService("Players")
 local t = game:GetService("TextChatService")
 local h = game:GetService("HttpService")
@@ -18,9 +27,9 @@ local c = env.ChatCommand
 local tk = env.TokenCount
 local r = env.ChatRadius
 local wnd = env.Wandering
-local wnddist = env.WanderDistance
-local wndwait = env.WanderWait
-local busy = false
+local wd = env.WanderDistance
+local ww = env.WanderWait
+local bs = false
 local pid = game.PlaceId
 local uid = game.GameId
 local gnm = "Unknown"
@@ -30,62 +39,62 @@ local cid = 0
 local isg = false
 local mxp = game.Players.MaxPlayers
 local plg = #p:GetPlayers()
-local knownPlayerNames = {}
-local playerMemories = {}
-local serverChatHistory = {}
-local MAX_SERVER_HISTORY = 250
+local kn = {}
+local pm = {}
+local sch = {}
+local MSH = 250
 
-local function refreshPlayerNames()
+local function rpn()
 	for _, pl in ipairs(p:GetPlayers()) do
 		if pl and pl.Name then
-			knownPlayerNames[tostring(pl.UserId)] = pl.Name
+			kn[tostring(pl.UserId)] = pl.Name
 		end
 	end
 end
 
-local function getCurrentPlayerSummaryList()
-	local names = {}
+local function gpl()
+	local nms = {}
 	for _, pl in ipairs(p:GetPlayers()) do
 		if pl then
-			local disp = pl.DisplayName or pl.Name or "Unknown"
-			local nick = pl.Name or "Unknown"
+			local dn = pl.DisplayName or pl.Name or "Unknown"
+			local nk = pl.Name or "Unknown"
 			local id = pl.UserId or 0
-			table.insert(names, string.format("%s (%s) [UserId: %d]", disp, nick, id))
+			table.insert(nms, string.format("%s (%s) [UserId: %d]", dn, nk, id))
 		end
 	end
-	table.sort(names)
-	return names
+	table.sort(nms)
+	return nms
 end
 
-local function getMemoryListForPlayer(player)
-	if not player then return {} end
-	local key = tostring(player.UserId or 0)
-	if not playerMemories[key] then
-		playerMemories[key] = {}
+local function gml(plr)
+	if not plr then return {} end
+	local ky = tostring(plr.UserId or 0)
+	if not pm[ky] then
+		pm[ky] = {}
 	end
-	return playerMemories[key]
+	return pm[ky]
 end
 
-local function addPlayerMemory(player, fact)
-	if not player or not fact then return end
-	local cleaned = tostring(fact):gsub("^%s+", ""):gsub("%s+$", "")
-	if cleaned == "" then return end
-	local list = getMemoryListForPlayer(player)
-	for _, existing in ipairs(list) do
-		if existing == cleaned then
+local function apm(plr, fact)
+	if not plr or not fact then return end
+	local cln = tostring(fact):gsub("^%s+", ""):gsub("%s+$", "")
+	if cln == "" then return end
+	local lst = gml(plr)
+	for _, ex in ipairs(lst) do
+		if ex == cln then
 			return
 		end
 	end
-	table.insert(list, cleaned)
-	while #list > 8 do
-		table.remove(list, 1)
+	table.insert(lst, cln)
+	while #lst > 8 do
+		table.remove(lst, 1)
 	end
 end
 
-local function extractMemoryFact(msg)
+local function emf(msg)
 	if not msg then return nil end
-	local lower = string.lower(msg)
-	local patterns = {
+	local lo = string.lower(msg)
+	local ptns = {
 		"remember that ",
 		"remember ",
 		"note that ",
@@ -101,63 +110,63 @@ local function extractMemoryFact(msg)
 		"i live in ",
 		"i have a favorite "
 	}
-	for _, pat in ipairs(patterns) do
-		local idx = string.find(lower, pat, 1, true)
+	for _, ptn in ipairs(ptns) do
+		local idx = string.find(lo, ptn, 1, true)
 		if idx then
-			local value = string.sub(msg, idx + string.len(pat))
-			value = value:gsub("^%s+", ""):gsub("%s+$", "")
-			if value ~= "" and #value <= 220 then
-				return value
+			local v = string.sub(msg, idx + string.len(ptn))
+			v = v:gsub("^%s+", ""):gsub("%s+$", "")
+			if v ~= "" and #v <= 220 then
+				return v
 			end
 		end
 	end
 	return nil
 end
 
-local function buildPlayerMemoryText(player)
-	local list = getMemoryListForPlayer(player)
-	if not list or #list == 0 then
+local function bpmt(plr)
+	local lst = gml(plr)
+	if not lst or #lst == 0 then
 		return "No stored memories for this player."
 	end
-	local lines = {}
-	for _, memory in ipairs(list) do
-		table.insert(lines, "- " .. memory)
+	local lns = {}
+	for _, mem in ipairs(lst) do
+		table.insert(lns, "- " .. mem)
 	end
-	return "Player memory:\n" .. table.concat(lines, "\n")
+	return "Player memory:\n" .. table.concat(lns, "\n")
 end
 
-local function addServerHistory(player, text)
-	local cleaned = tostring(text):gsub("^%s+", ""):gsub("%s+$", "")
-	if cleaned == "" then return end
+local function ash(plr, tx)
+	local cln = tostring(tx):gsub("^%s+", ""):gsub("%s+$", "")
+	if cln == "" then return end
 
-	table.insert(serverChatHistory, {
-		playerName = player and (player.DisplayName or player.Name or "Unknown") or "Unknown",
-		username = player and (player.Name or "Unknown") or "Unknown",
-		userId = player and (player.UserId or 0) or 0,
-		text = cleaned
+	table.insert(sch, {
+		playerName = plr and (plr.DisplayName or plr.Name or "Unknown") or "Unknown",
+		username = plr and (plr.Name or "Unknown") or "Unknown",
+		userId = plr and (plr.UserId or 0) or 0,
+		text = cln
 	})
 
-	while #serverChatHistory > MAX_SERVER_HISTORY do
-		table.remove(serverChatHistory, 1)
+	while #sch > MSH do
+		table.remove(sch, 1)
 	end
 end
 
-local function buildServerHistoryPrompt()
-	if #serverChatHistory == 0 then
+local function bshp()
+	if #sch == 0 then
 		return "Server chat history: none yet."
 	end
 
-	local lines = { "Server chat history:" }
-	for _, entry in ipairs(serverChatHistory) do
-		table.insert(lines, string.format(
+	local lns = { "Server chat history:" }
+	for _, en in ipairs(sch) do
+		table.insert(lns, string.format(
 			"%s (%s) [UserId: %d]: %s",
-			entry.playerName,
-			entry.username,
-			entry.userId,
-			entry.text
+			en.playerName,
+			en.username,
+			en.userId,
+			en.text
 		))
 	end
-	return table.concat(lines, "\n")
+	return table.concat(lns, "\n")
 end
 
 pcall(function()
@@ -174,6 +183,7 @@ local pr = string.format([[
 You are a helpful and fun Roblox chatbot inside a game.
 You have a message limit of 200 characters so use them correctly and be friendly.
 Never use emojis or special symbols in your replies. Only use normal letters, numbers, and basic punctuation like periods, commas, and question marks.
+Reply with plain text only: no markdown, no asterisks, no bullet points, no lists. One or two short sentences maximum.
 Game Information:
 - Name: %s
 - Description: %s
@@ -184,7 +194,7 @@ Game Information:
 - Players Currently in Server: %d
 Use this information when players ask about the game.
 ]], gnm, gds, pid, uid, cnm, isg and "Group" or "User", cid, mxp, plg)
-local tips = {
+local tps = {
 	"Come close to me and just talk normally!",
 	"If you're far away, type " .. c .. "then your message.",
 	"I'm an AI bot, walk up and chat with me!",
@@ -194,18 +204,14 @@ local tips = {
 local b = lp.Character
 local hum, hrp
 if b then
-	local mdl = b
-	hum = mdl and mdl:FindFirstChildOfClass("Humanoid")
-	hrp = mdl and mdl:FindFirstChild("HumanoidRootPart")
+	hum = b:FindFirstChildOfClass("Humanoid")
+	hrp = b:FindFirstChild("HumanoidRootPart")
 end
-lp.CharacterAdded:Connect(function(c)
-	b = c
-	b:WaitForChild("HumanoidRootPart")
-	if b then
-		local mdl = b
-		hum = mdl and mdl:FindFirstChildOfClass("Humanoid")
-		hrp = mdl and mdl:FindFirstChild("HumanoidRootPart")
-	end
+lp.CharacterAdded:Connect(function(chr)
+	b = chr
+	chr:WaitForChild("HumanoidRootPart")
+	hum = b:FindFirstChildOfClass("Humanoid")
+	hrp = b:FindFirstChild("HumanoidRootPart")
 end)
 local sp = hrp and hrp.Position or Vector3.new(0,5,0)
 local function gp()
@@ -218,37 +224,19 @@ local function gr()
 	if http and typeof(http.request) == "function" then return http.request end
 	if typeof(http_request) == "function" then return http_request end
 	if fluxus and typeof(fluxus.request) == "function" then return fluxus.request end
-	local ok, api = pcall(function()
-		return game:GetService("HttpRbxApiService")
-	end)
-	if ok and api then
-		if typeof(api.RequestAsync) == "function" then
-			return function(o) return api:RequestAsync(o) end
-		end
-		if typeof(api.PostAsyncFullUrl) == "function" then
-			return function(o)
-				local mth = (o.Method or "GET"):upper()
-				if mth == "POST" then
-					return {StatusCode=200, Body=api:PostAsyncFullUrl(o.Url, o.Body or "", Enum.ThrottlingPriority.Default, Enum.HttpContentType.ApplicationJson)}
-				else
-					return {StatusCode=200, Body=api:GetAsyncFullUrl(o.Url)}
-				end
-			end
-		end
-	end
 	if typeof(game.HttpGet) == "function" or typeof(game.HttpGetAsync) == "function" then
 		return function(o)
-			local u = o.Url
-			local mth = (o.Method or "GET"):upper()
+			local u = o.Url or o.url
+			local mth = tostring(o.Method or o.method or "GET"):upper()
 			if mth == "POST" and typeof(game.HttpPost) == "function" then
-				return {StatusCode=200, Body=game:HttpPost(u, o.Body or "", true)}
+				return { StatusCode = 200, Body = game:HttpPost(u, o.Body or o.body or "", true) }
 			else
 				local bd = (game.HttpGetAsync and game:HttpGetAsync(u)) or game:HttpGet(u, true)
-				return {StatusCode=200, Body=bd}
+				return { StatusCode = 200, Body = bd }
 			end
 		end
 	end
-	error("No usable request function found")
+	error("No usable request function found - your executor may be blocking HTTP")
 end
 local rq = gr()
 local function ch(msg)
@@ -264,191 +252,273 @@ local function ch(msg)
 		end
 	end
 end
-local function buildChatContext(speaker)
-	refreshPlayerNames()
-	local playerString = table.concat(getCurrentPlayerSummaryList(), ", ")
-	if playerString == "" then
-		playerString = "No other players currently in server"
+local function bcc(spk)
+	rpn()
+	local pls = table.concat(gpl(), ", ")
+	if pls == "" then
+		pls = "No other players currently in server"
 	end
-	local memoryText = "No stored memories for this player."
-	if speaker then
-		memoryText = buildPlayerMemoryText(speaker)
-		local dname = speaker.DisplayName or speaker.Name or "Unknown"
-		local uname = speaker.Name or "Unknown"
-		local uidVal = speaker.UserId or 0
+	local mem = "No stored memories for this player."
+	if spk then
+		mem = bpmt(spk)
+		local dn = spk.DisplayName or spk.Name or "Unknown"
+		local un = spk.Name or "Unknown"
+		local uid2 = spk.UserId or 0
 		return string.format(
 			"Speaker details: display name=%s, username=%s, userId=%d\nPlayer memory:\n%s\nCurrent server players: %s\n\n%s\n\n",
-			dname,
-			uname,
-			uidVal,
-			memoryText,
-			playerString,
-			buildServerHistoryPrompt()
+			dn,
+			un,
+			uid2,
+			mem,
+			pls,
+			bshp()
 		)
 	end
-	return "Player memory:\n" .. memoryText .. "\nCurrent server players: " .. playerString .. "\n\n" .. buildServerHistoryPrompt() .. "\n\n"
+	return "Player memory:\n" .. mem .. "\nCurrent server players: " .. pls .. "\n\n" .. bshp() .. "\n\n"
 end
-local FALLBACK_MODELS = {
+local FBM = {
 	"gemini-flash-latest",
 	"gemini-flash-lite-latest",
 }
-local function ask(txt, speaker)
+local function aq(txt, spk)
 	if not k or k == "" then
 		return "Gemini API key missing."
 	end
 
-	local promptText = buildChatContext(speaker) .. txt
-	local maxTokens = tonumber(tk) or 200
-	local function buildBody(model)
-		local body = {
+	local function clm(mdl)
+		mdl = tostring(mdl or "")
+		mdl = mdl:gsub('[%s"\']', "")
+		return mdl
+	end
+
+	local mdl = clm(m)
+	if mdl == "" then mdl = "gemini-flash-latest" end
+
+	if not mdl:match("^[%w%.%-]+$") then
+		return "Invalid model name, check your AIModel setting"
+	end
+
+	local pt = bcc(spk) .. txt
+	local mt = tonumber(tk) or 200
+
+	local function bb(mdl)
+		local bd = {
 			systemInstruction = { parts = { { text = pr } } },
 			contents = {
-				{ role = "user", parts = { { text = promptText } } }
+				{ role = "user", parts = { { text = pt } } }
 			},
 			generationConfig = {
-				maxOutputTokens = maxTokens,
+				maxOutputTokens = mt,
 				temperature = 0.7,
 				topP = 0.9,
 			},
 		}
 		local tc
-		if model:find("^gemini%-2%.5%-flash") then
-			tc = { thinkingBudget = 0 }        -- 2.5 Flash/Flash-Lite: thinking fully off
-		elseif model:find("^gemini%-2%.5%-pro") then
-			tc = { thinkingBudget = 128 }      -- Pro can't disable thinking; 128 is minimum
-		elseif model:find("^gemini%-3") or model:find("^gemini%-4") or model:find("%-latest$") then
-			tc = { thinkingLevel = "minimal" } -- 3.x/4.x and -latest aliases: lowest level
+		if mdl:find("^gemini%-2%.5%-flash") then
+			tc = { thinkingBudget = 0 }
+		elseif mdl:find("^gemini%-2%.5%-pro") then
+			tc = { thinkingBudget = 128 }
+		elseif mdl:find("^gemini%-3") or mdl:find("^gemini%-4") or mdl:find("%-latest$") then
+			tc = { thinkingLevel = "minimal" }
 		end
 		if tc then
-			body.generationConfig.thinkingConfig = tc
+			bd.generationConfig.thinkingConfig = tc
 		end
-
-		return body
+		return bd
 	end
-	local headers = {
+
+	local hdrs = {
 		["Content-Type"] = "application/json",
 		["x-goog-api-key"] = tostring(k),
 	}
-	local function send(model, bd)
+
+	local function snd(mdl, bd)
+		local js = h:JSONEncode(bd)
+		local u = "https://generativelanguage.googleapis.com/v1beta/models/" .. mdl .. ":generateContent"
+		print("Debug AI: calling " .. mdl)
+		local opt = {
+			Url = u,         url = u,
+			Method = "POST", method = "POST",
+			Headers = hdrs,  headers = hdrs,
+			Body = js,       body = js,
+		}
 		local ok, res = pcall(function()
-			return rq({
-				Url = "https://generativelanguage.googleapis.com/v1beta/models/" .. model .. ":generateContent",
-				Method = "POST",
-				Headers = headers,
-				Body = h:JSONEncode(bd),
-			})
+			return rq(opt)
 		end)
 		if not ok or not res then return nil, tostring(res) end
-		local responseText = type(res.Body) == "string" and res.Body or h:JSONEncode(res.Body or {})
-		local decodeOkay, data = pcall(function()
-			return h:JSONDecode(responseText)
+		local rb = type(res.Body) == "string" and res.Body
+			or (type(res.body) == "string" and res.body)
+			or h:JSONEncode(res.Body or res.body or {})
+		local dok, d = pcall(function()
+			return h:JSONDecode(rb)
 		end)
-		if not decodeOkay then return nil, "Invalid JSON reply from Gemini" end
-		return data, nil
+		if not dok then return nil, "Invalid JSON reply from Gemini" end
+		return d, nil
 	end
-	local attempted = {}
-	local function tryModel(model)
-		if attempted[model] then return nil, nil end -- already tried, skip
-		attempted[model] = true
-		return send(model, buildBody(model))
+
+	local att = {}
+	local function trm(mdl)
+		if att[mdl] then return nil, nil end
+		att[mdl] = true
+		return snd(mdl, bb(mdl))
 	end
-	local model = m or "gemini-flash-latest"
-	local data, err = tryModel(model)
-	if not data then
-		for _, fb in ipairs(FALLBACK_MODELS) do
-			data, err = tryModel(fb)
-			if data then break end
+
+	local d, er = trm(mdl)
+	if not d then
+		for _, fb in ipairs(FBM) do
+			local d2, e2 = trm(fb)
+			if d2 then
+				d = d2
+				break
+			end
+			if e2 then
+				er = e2
+			end
 		end
 	end
-	if not data and err and err:lower():find("thinking") then
-		local bd = buildBody(model)
+
+	if not d and er and er:lower():find("thinking") then
+		local bd = bb(mdl)
 		bd.generationConfig.thinkingConfig = nil
-		data, err = send(model, bd)
+		d, er = snd(mdl, bd)
 	end
-	if not data then
-		return "Gemini request failed: " .. tostring(err)
+
+	if not d then
+		return "Gemini request failed: " .. tostring(er)
 	end
-	if data.error then
-		return "Gemini error: " .. tostring(data.error.message or data.error.code or "unknown")
+	if d.error then
+		return "Gemini error: " .. tostring(d.error.message or d.error.code or "unknown")
 	end
-	if data.promptFeedback and data.promptFeedback.blockReason then
-		return "Reply blocked: " .. tostring(data.promptFeedback.blockReason)
+	if d.promptFeedback and d.promptFeedback.blockReason then
+		return "Reply blocked: " .. tostring(d.promptFeedback.blockReason)
 	end
-	if data.candidates and data.candidates[1] then
-		local cand = data.candidates[1]
-		local parts = cand.content and cand.content.parts
-		local out = {}
-		if type(parts) == "table" then
-			for _, part in ipairs(parts) do
-				if type(part) == "table" and type(part.text) == "string" and part.text ~= "" then
-					table.insert(out, part.text)
+	if d.candidates and d.candidates[1] then
+		local cd = d.candidates[1]
+		local pts = cd.content and cd.content.parts
+		local ot = {}
+		if type(pts) == "table" then
+			for _, prt in ipairs(pts) do
+				if type(prt) == "table" and type(prt.text) == "string" and prt.text ~= "" then
+					table.insert(ot, prt.text)
 				end
 			end
 		end
-		-- Plain text only: strip markdown artifacts the model might add.
-		local text = table.concat(out, "\n")
-		text = text:gsub("%*+", ""):gsub("`+", "")
-		text = text:gsub("^%s+", ""):gsub("%s+$", "")
-		if text ~= "" then
-			return text
+		local tx = table.concat(ot, "\n")
+		tx = tx:gsub("%*+", ""):gsub("`+", "")
+		tx = tx:gsub("^%s+", ""):gsub("%s+$", "")
+		if tx ~= "" then
+			return tx
 		end
-		return "Empty reply (finishReason: " .. tostring(cand.finishReason) .. ")"
+		return "Empty reply (finishReason: " .. tostring(cd.finishReason) .. ")"
 	end
 	return "No valid reply received."
 end
 local function nr(plr)
-	local char = plr.Character
-	if not char then return false end
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return false end
-	return (root.Position - gp()).Magnitude <= r
+	local chr = plr.Character
+	if not chr then return false end
+	local rt = chr:FindFirstChild("HumanoidRootPart")
+	if not rt then return false end
+	return (rt.Position - gp()).Magnitude <= r
 end
 task.spawn(function()
 	while true do
 		task.wait(10)
-		if not busy then
-			ch(tips[math.random(1, #tips)])
+		if not bs then
+			ch(tps[math.random(1, #tps)])
 		end
 	end
 end)
+
+local MPA = 3
+
+local function pwg()
+	local off = Vector3.new(
+		math.random(-wd, wd),
+		0,
+		math.random(-wd, wd)
+	)
+	return sp + off
+end
+
+local function cwp(fr, gl)
+	local pth = pfs:CreatePath({
+		AgentRadius = 2,
+		AgentHeight = 5,
+		AgentCanJump = true,
+	})
+	local ok = pcall(function()
+		pth:ComputeAsync(fr, gl)
+	end)
+	if ok and pth.Status == Enum.PathStatus.Success then
+		return pth, true
+	end
+	return pth, false
+end
+
+local function fp(pth)
+	local wps = pth:GetWaypoints()
+	for _, wp in ipairs(wps) do
+		if not hum or not hum.Parent or hum.Health <= 0 then return false end
+		if not hrp or not hrp.Parent then return false end
+
+		hum:MoveTo(wp.Position)
+		if wp.Action == Enum.PathWaypointAction.Jump then
+			hum.Jump = true
+		end
+		if hum.Sit == true then
+			task.spawn(function()
+				task.wait(0.75)
+				if hum then
+					hum.Jump = true
+					hum.Sit = false
+				end
+			end)
+		end
+
+		local tm = 0
+		local rch = false
+		while tm < 2 do
+			if not hum or not hum.Parent or hum.Health <= 0 then return false end
+			if not hrp or not hrp.Parent then return false end
+			if (hrp.Position - wp.Position).Magnitude < 4 then
+				rch = true
+				break
+			end
+			tm += task.wait()
+		end
+
+		if not rch then
+			if hum then hum.Jump = true end
+			return false
+		end
+	end
+	return true
+end
+
 if wnd and hum and hrp then
 	task.spawn(function()
 		while true do
-			task.wait(wndwait + math.random(0, 3))
-			local off = Vector3.new(
-				math.random(-wnddist, wnddist),
-				0,
-				math.random(-wnddist, wnddist)
-			)
-			local goal = sp + off
-			local path = pfs:CreatePath({
-				AgentRadius = 2,
-				AgentHeight = 5,
-				AgentCanJump = true
-			})
-			local ok = pcall(function()
-				path:ComputeAsync(hrp.Position, goal)
-			end)
-			if ok and path.Status == Enum.PathStatus.Success then
-				local wps = path:GetWaypoints()
-				for _, wp in ipairs(wps) do
-					if not hum or hum.Health <= 0 then break end
-					hum:MoveTo(wp.Position)
-					if wp.Action == Enum.PathWaypointAction.Jump then
-						hum.Jump = true
+			task.wait(ww + math.random(0, 3))
+
+			if not hum or not hum.Parent or not hrp or not hrp.Parent or hum.Health <= 0 then
+				continue
+			end
+
+			local gl = pwg()
+
+			for at = 1, MPA do
+				local pth, ok = cwp(hrp.Position, gl)
+
+				if ok then
+					local wlk = fp(pth)
+					if wlk then break end
+				end
+
+				if at < MPA then
+					if at >= 2 then
+						gl = pwg()
 					end
-					if hum.Sit == true then
-						task.spawn(function()
-							task.wait(0.75)
-							hum.Jump = true
-							hum.Sit = false
-						end)
-					end
-					local tm = 0
-					while tm < 2 do
-						if (hrp.Position - wp.Position).Magnitude < 4 then break end
-						tm += task.wait()
-					end
+					task.wait(0.25)
 				end
 			end
 		end
@@ -459,7 +529,7 @@ t.MessageReceived:Connect(function(msg)
 	if not msg.TextSource then return end
 	local spk = p:GetPlayerByUserId(msg.TextSource.UserId)
 	if not spk then return end
-	knownPlayerNames[tostring(spk.UserId)] = spk.Name
+	kn[tostring(spk.UserId)] = spk.Name
 	local txt = msg.Text
 	local has = string.sub(txt, 1, #c) == c
 	local inr = nr(spk)
@@ -476,17 +546,17 @@ t.MessageReceived:Connect(function(msg)
 			q = string.sub(txt, #c + 1):gsub("^%s+", "")
 		end
 	end
-	if dor and q ~= "" and spk ~= lp and not busy then
-		local memoryFact = extractMemoryFact(q)
-		if memoryFact then
-			addPlayerMemory(spk, memoryFact)
+	if dor and q ~= "" and spk ~= lp and not bs then
+		local mf = emf(q)
+		if mf then
+			apm(spk, mf)
 		end
-		addServerHistory(spk, q)
-		busy = true
+		ash(spk, q)
+		bs = true
 		ch("Thinking...")
-		local rpl = ask(q, spk)
+		local rpl = aq(q, spk)
 		ch(rpl)
-		busy = false
+		bs = false
 	end
 end)
 print("[Range AI Bot] Loaded!")
