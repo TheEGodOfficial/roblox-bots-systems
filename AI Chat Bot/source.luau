@@ -288,93 +288,112 @@ local function buildChatContext(speaker)
 	end
 	return "Player memory:\n" .. memoryText .. "\nCurrent server players: " .. playerString .. "\n\n" .. buildServerHistoryPrompt() .. "\n\n"
 end
+local FALLBACK_MODELS = {
+	"gemini-flash-latest",
+	"gemini-flash-lite-latest",
+}
 local function ask(txt, speaker)
-	local key = k
-	local model = m or "gemini-2.0-flash"
-
-	if not key or key == "" then
+	if not k or k == "" then
 		return "Gemini API key missing."
 	end
 
 	local promptText = buildChatContext(speaker) .. txt
-	local body = {
-		systemInstruction = {
-			parts = {
-				{ text = pr }
-			}
-		},
-		contents = {
-			{
-				role = "user",
-				parts = {
-					{ text = promptText }
-				}
-			}
-		},
-		generationConfig = {
-			maxOutputTokens = tonumber(tk) or 200,
-			temperature = 0.7,
-			topP = 0.9
+	local maxTokens = tonumber(tk) or 200
+	local function buildBody(model)
+		local body = {
+			systemInstruction = { parts = { { text = pr } } },
+			contents = {
+				{ role = "user", parts = { { text = promptText } } }
+			},
+			generationConfig = {
+				maxOutputTokens = maxTokens,
+				temperature = 0.7,
+				topP = 0.9,
+			},
 		}
-	}
+		local tc
+		if model:find("^gemini%-2%.5%-flash") then
+			tc = { thinkingBudget = 0 }        -- 2.5 Flash/Flash-Lite: thinking fully off
+		elseif model:find("^gemini%-2%.5%-pro") then
+			tc = { thinkingBudget = 128 }      -- Pro can't disable thinking; 128 is minimum
+		elseif model:find("^gemini%-3") or model:find("^gemini%-4") or model:find("%-latest$") then
+			tc = { thinkingLevel = "minimal" } -- 3.x/4.x and -latest aliases: lowest level
+		end
+		if tc then
+			body.generationConfig.thinkingConfig = tc
+		end
 
+		return body
+	end
 	local headers = {
-		["Content-Type"] = "application/json"
+		["Content-Type"] = "application/json",
+		["x-goog-api-key"] = tostring(k),
 	}
-
-	if string.sub(tostring(key), 1, 4) == "AIza" then
-		headers["x-goog-api-key"] = tostring(key)
-	else
-		headers["Authorization"] = "Bearer " .. tostring(key)
+	local function send(model, bd)
+		local ok, res = pcall(function()
+			return rq({
+				Url = "https://generativelanguage.googleapis.com/v1beta/models/" .. model .. ":generateContent",
+				Method = "POST",
+				Headers = headers,
+				Body = h:JSONEncode(bd),
+			})
+		end)
+		if not ok or not res then return nil, tostring(res) end
+		local responseText = type(res.Body) == "string" and res.Body or h:JSONEncode(res.Body or {})
+		local decodeOkay, data = pcall(function()
+			return h:JSONDecode(responseText)
+		end)
+		if not decodeOkay then return nil, "Invalid JSON reply from Gemini" end
+		return data, nil
 	end
-
-	local ok, res = pcall(function()
-		return rq({
-			Url = "https://generativelanguage.googleapis.com/v1beta/models/" .. model .. ":generateContent",
-			Method = "POST",
-			Headers = headers,
-			Body = h:JSONEncode(body)
-		})
-	end)
-
-	if not ok or not res then
-		return "Request failed: " .. tostring(res)
+	local attempted = {}
+	local function tryModel(model)
+		if attempted[model] then return nil, nil end -- already tried, skip
+		attempted[model] = true
+		return send(model, buildBody(model))
 	end
-
-	local responseText = type(res.Body) == "string" and res.Body or h:JSONEncode(res.Body or {})
-	local decodeOkay, data = pcall(function()
-		return h:JSONDecode(responseText)
-	end)
-
-	if not decodeOkay then
-		return "Invalid JSON reply from Gemini."
+	local model = m or "gemini-flash-latest"
+	local data, err = tryModel(model)
+	if not data then
+		for _, fb in ipairs(FALLBACK_MODELS) do
+			data, err = tryModel(fb)
+			if data then break end
+		end
 	end
-
-	if data and data.error then
+	if not data and err and err:lower():find("thinking") then
+		local bd = buildBody(model)
+		bd.generationConfig.thinkingConfig = nil
+		data, err = send(model, bd)
+	end
+	if not data then
+		return "Gemini request failed: " .. tostring(err)
+	end
+	if data.error then
 		return "Gemini error: " .. tostring(data.error.message or data.error.code or "unknown")
 	end
-
-	if data and data.candidates and data.candidates[1] then
-		local candidate = data.candidates[1]
-		local parts = candidate and candidate.content and candidate.content.parts
+	if data.promptFeedback and data.promptFeedback.blockReason then
+		return "Reply blocked: " .. tostring(data.promptFeedback.blockReason)
+	end
+	if data.candidates and data.candidates[1] then
+		local cand = data.candidates[1]
+		local parts = cand.content and cand.content.parts
+		local out = {}
 		if type(parts) == "table" then
-			local out = {}
 			for _, part in ipairs(parts) do
 				if type(part) == "table" and type(part.text) == "string" and part.text ~= "" then
 					table.insert(out, part.text)
 				end
 			end
-			local text = table.concat(out, "\n")
-			if text ~= "" then
-				return text:gsub("^%s+", ""):gsub("%s+$", "")
-			end
 		end
-
-		if type(candidate.text) == "string" and candidate.text ~= "" then
-			return candidate.text:gsub("^%s+", ""):gsub("%s+$", "")
+		-- Plain text only: strip markdown artifacts the model might add.
+		local text = table.concat(out, "\n")
+		text = text:gsub("%*+", ""):gsub("`+", "")
+		text = text:gsub("^%s+", ""):gsub("%s+$", "")
+		if text ~= "" then
+			return text
 		end
+		return "Empty reply (finishReason: " .. tostring(cand.finishReason) .. ")"
 	end
-
 	return "No valid reply received."
 end
 local function nr(plr)
