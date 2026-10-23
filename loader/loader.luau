@@ -19,7 +19,7 @@ local Wandering = true
 local WanderDistance = 40
 local WanderWait = 3
 
-if lp.Name == "SwordFightingClanker" then
+--[[if lp.Name == "SwordFightingClanker" then
 	--[[
     MIT License
 
@@ -53,7 +53,7 @@ elseif lp.Name == "Slop_AI" then
 
     loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/AI%20Chat%20Bot/source.luau"))()
 	return
-end
+end]]]
 
 APIKey = nil
 
