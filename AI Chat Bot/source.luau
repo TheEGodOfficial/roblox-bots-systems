@@ -31,6 +31,7 @@ local isg = false
 local mxp = game.Players.MaxPlayers
 local plg = #p:GetPlayers()
 local knownPlayerNames = {}
+local playerMemories = {}
 
 local function refreshPlayerNames()
 	for _, pl in ipairs(p:GetPlayers()) do
@@ -52,6 +53,75 @@ local function getCurrentPlayerSummaryList()
 	end
 	table.sort(names)
 	return names
+end
+
+local function getMemoryListForPlayer(player)
+	if not player then return {} end
+	local key = tostring(player.UserId or 0)
+	if not playerMemories[key] then
+		playerMemories[key] = {}
+	end
+	return playerMemories[key]
+end
+
+local function addPlayerMemory(player, fact)
+	if not player or not fact then return end
+	local cleaned = tostring(fact):gsub("^%s+", ""):gsub("%s+$", "")
+	if cleaned == "" then return end
+	local list = getMemoryListForPlayer(player)
+	for _, existing in ipairs(list) do
+		if existing == cleaned then
+			return
+		end
+	end
+	table.insert(list, cleaned)
+	while #list > 8 do
+		table.remove(list, 1)
+	end
+end
+
+local function extractMemoryFact(msg)
+	if not msg then return nil end
+	local lower = string.lower(msg)
+	local patterns = {
+		"remember that ",
+		"remember ",
+		"note that ",
+		"my favorite ",
+		"i like ",
+		"i love ",
+		"my name is ",
+		"i am ",
+		"i play ",
+		"i enjoy ",
+		"i hate ",
+		"i want ",
+		"i live in ",
+		"i have a favorite "
+	}
+	for _, pat in ipairs(patterns) do
+		local idx = string.find(lower, pat, 1, true)
+		if idx then
+			local value = string.sub(msg, idx + string.len(pat))
+			value = value:gsub("^%s+", ""):gsub("%s+$", "")
+			if value ~= "" and #value <= 220 then
+				return value
+			end
+		end
+	end
+	return nil
+end
+
+local function buildPlayerMemoryText(player)
+	local list = getMemoryListForPlayer(player)
+	if not list or #list == 0 then
+		return "No stored memories for this player."
+	end
+	local lines = {}
+	for _, memory in ipairs(list) do
+		table.insert(lines, "- " .. memory)
+	end
+	return "Player memory:\n" .. table.concat(lines, "\n")
 end
 
 pcall(function()
@@ -164,19 +234,22 @@ local function buildChatContext(speaker)
 	if playerString == "" then
 		playerString = "No other players currently in server"
 	end
+	local memoryText = "No stored memories for this player."
 	if speaker then
+		memoryText = buildPlayerMemoryText(speaker)
 		local dname = speaker.DisplayName or speaker.Name or "Unknown"
 		local uname = speaker.Name or "Unknown"
 		local uidVal = speaker.UserId or 0
 		return string.format(
-			"Speaker details: display name=%s, username=%s, userId=%d\nCurrent server players: %s\n\n",
+			"Speaker details: display name=%s, username=%s, userId=%d\nPlayer memory:\n%s\nCurrent server players: %s\n\n",
 			dname,
 			uname,
 			uidVal,
+			memoryText,
 			playerString
 		)
 	end
-	return "Current server players: " .. playerString .. "\n\n"
+	return "Player memory:\n" .. memoryText .. "\nCurrent server players: " .. playerString .. "\n\n"
 end
 local function ask(txt, speaker)
 	local key = env.GeminiKey or env.APIKey
@@ -332,6 +405,10 @@ t.MessageReceived:Connect(function(msg)
 		end
 	end
 	if dor and q ~= "" and spk ~= lp and not busy then
+		local memoryFact = extractMemoryFact(q)
+		if memoryFact then
+			addPlayerMemory(spk, memoryFact)
+		end
 		busy = true
 		ch("Thinking...")
 		local rpl = ask(q, spk)
