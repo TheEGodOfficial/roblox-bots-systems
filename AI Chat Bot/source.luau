@@ -33,7 +33,7 @@ local plg = #p:GetPlayers()
 local knownPlayerNames = {}
 local playerMemories = {}
 local serverChatHistory = {}
-local MAX_SERVER_HISTORY = 25
+local MAX_SERVER_HISTORY = 250
 
 local function refreshPlayerNames()
 	for _, pl in ipairs(p:GetPlayers()) do
