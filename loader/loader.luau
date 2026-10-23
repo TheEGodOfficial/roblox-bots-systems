@@ -4,9 +4,7 @@ MIT License
 Copyright (c) 2026 E God/Fred
 ]]
 
-repeat
-    task.wait(0.1)
-until game:IsLoaded()
+
 
 local lp = game:GetService("Players").LocalPlayer
 
