@@ -294,9 +294,7 @@ local function ask(txt, speaker)
 	if not key or key == "" then
 		return "Gemini API key missing."
 	end
-
 	local promptText = buildChatContext(speaker) .. txt
-
 	local body = {
 		systemInstruction = {
 			parts = {
@@ -317,7 +315,6 @@ local function ask(txt, speaker)
 			topP = 0.9
 		}
 	}
-
 	local ok, res = pcall(function()
 		return rq({
 			Url = "https://generativelanguage.googleapis.com/v1beta/models/" .. model .. ":generateContent?key=" .. key,
@@ -328,24 +325,19 @@ local function ask(txt, speaker)
 			Body = h:JSONEncode(body)
 		})
 	end)
-
 	if not ok or not res then
 		return "Request failed: " .. tostring(res)
 	end
-
 	local responseText = type(res.Body) == "string" and res.Body or h:JSONEncode(res.Body or {})
 	local decodeOkay, data = pcall(function()
 		return h:JSONDecode(responseText)
 	end)
-
 	if not decodeOkay then
 		return "Invalid JSON reply from Gemini."
 	end
-
 	if data and data.error then
 		return "Gemini error: " .. tostring(data.error.message or data.error.code or "unknown")
 	end
-
 	if data and data.candidates and data.candidates[1] then
 		local candidate = data.candidates[1]
 		local parts = candidate and candidate.content and candidate.content.parts
@@ -365,7 +357,6 @@ local function ask(txt, speaker)
 			return candidate.text:gsub("^%s+", ""):gsub("%s+$", "")
 		end
 	end
-
 	return "No valid reply received."
 end
 local function nr(plr)
@@ -408,6 +399,13 @@ if wnd and hum and hrp then
 					hum:MoveTo(wp.Position)
 					if wp.Action == Enum.PathWaypointAction.Jump then
 						hum.Jump = true
+					end
+					if hum.Sit == true then
+						task.spawn(function()
+							task.wait(0.75)
+							hum.Jump = true
+							hum.Sit = false
+						end)
 					end
 					local tm = 0
 					while tm < 2 do
