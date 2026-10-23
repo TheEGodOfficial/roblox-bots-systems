@@ -480,11 +480,17 @@ local function fp(pth)
 		while tm < 2 do
 			if not hum or not hum.Parent or hum.Health <= 0 then return false end
 			if not hrp or not hrp.Parent then return false end
-			if (hrp.Position - wp.Position).Magnitude < 4 then
+			local cur = hrp.Position
+			local dt = task.wait()
+			local now = hrp.Position
+			if (now - wp.Position).Magnitude < 4 then
 				rch = true
 				break
 			end
-			tm += task.wait()
+			if (now - cur).Magnitude > math.max(hum.WalkSpeed, 30) * dt + 15 then
+				break
+			end
+			tm += dt
 		end
 
 		if not rch then
