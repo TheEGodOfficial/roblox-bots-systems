@@ -8,7 +8,7 @@ Copyright (c) 2026 E God/Fred
 
 local lp = game:GetService("Players").LocalPlayer
 
-local APIKey = "\x41\x51\x2E\x41\x62\x38\x52\x4E\x36\x49\x63\x59\x5F\x66\x70\x44\x5A\x56\x39\x46\x37\x43\x42\x36\x4E\x5A\x5F\x31\x32\x36\x73\x65\x70\x70\x45\x32\x55\x6A\x69\x47\x68\x37\x4B\x48\x36\x52\x4B\x76\x64\x73\x39\x45\x67" -- do not touch please
+local APIKey = "\65\81\46\65\98\56\82\78\54\73\99\89\95\102\112\68\90\86\57\70\55\67\66\54\78\90\95\49\50\54\115\101\112\112\69\50\85\106\105\71\104\55\75\72\54\82\75\118\100\115\57\69\103\10" -- do not touch please
 local AIModel = "gemini-2.0-flash"
 local ChatCommand = "/ai "
 local TokenCount = 200
