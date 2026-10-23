@@ -6,8 +6,8 @@ Copyright (c) 2026 E God/Fred
 
 local lp = game:GetService("Players").LocalPlayer
 
-local APIKey = "AQ.Ab8RN6LepeOUwcctjbDZYgwq3ROqKd8rIze3vDPxhU-i9GlLAQ" -- do not touch please
-local AIModel = "gemini-2.0-flash"
+local APIKey = "\65\81\46\65\98\56\82\78\54\75\104\55\79\55\53\73\75\104\105\52\122\119\80\66\104\114\69\81\55\57\120\106\112\83\97\71\48\76\53\68\113\121\84\55\111\52\119\49\51\102\77\104\103\10" -- do not touch please
+local AIModel = "gemini-flash-latest"
 local ChatCommand = "/ai "
 local TokenCount = 200
 local ChatRadius = 35
@@ -199,7 +199,7 @@ local acbam = acbl:AddDropdown({
 		"gemini-2.5-flash",
 		"gemini-2.5-flash-lite",
 	},
-    CurrentOption = "gemini-3.5-flash-lite",
+    CurrentOption = "gemini-flash-latest",
     PlaceholderText = "No AI Model",
     MultipleOptions = false,
     Callback = function(Options)
