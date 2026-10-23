@@ -289,8 +289,8 @@ local function buildChatContext(speaker)
 	return "Player memory:\n" .. memoryText .. "\nCurrent server players: " .. playerString .. "\n\n" .. buildServerHistoryPrompt() .. "\n\n"
 end
 local function ask(txt, speaker)
-	local key = env.APIKey
-	local model = env.AIModel or "gemini-2.0-flash"
+	local key = k
+	local model = m or "gemini-2.0-flash"
 	if not key or key == "" then
 		return "Gemini API key missing."
 	end
