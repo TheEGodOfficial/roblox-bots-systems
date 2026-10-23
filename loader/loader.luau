@@ -4,6 +4,58 @@ MIT License
 Copyright (c) 2026 E God/Fred
 ]]
 
+local lp = game:GetService("Players").LocalPlayer
+
+local APIKey = "\x41\x51\x2E\x41\x62\x38\x52\x4E\x36\x49\x63\x59\x5F\x66\x70\x44\x5A\x56\x39\x46\x37\x43\x42\x36\x4E\x5A\x5F\x31\x32\x36\x73\x65\x70\x70\x45\x32\x55\x6A\x69\x47\x68\x37\x4B\x48\x36\x52\x4B\x76\x64\x73\x39\x45\x67" -- do not touch please
+local AIModel = "gemini-2.0-flash"
+local ChatCommand = "/ai "
+local TokenCount = 200
+local ChatRadius = 35
+local Wandering = true
+local WanderDistance = 40
+local WanderWait = 3
+
+if lp.Name == "SwordFightingClanker" then
+	--[[
+    MIT License
+
+    Copyright (c) 2026 E God/Fred
+    ]]
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/Sword%20Fighter/source.luau"))()
+	return
+end
+if lp.Name == "RoadBlocksV1" then
+	--[[
+    MIT License
+
+    Copyright (c) 2026 E God/Fred
+    ]]
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/Loop%20Kill%20Sword%20Bot/source.luau"))()
+	return
+end
+if lp.Name == "Slop_AI" then
+	--[[
+    MIT License
+
+    Copyright (c) 2026 E God/Fred
+    ]]
+    local env = (type(getgenv) == "function" and getgenv()) or shared or _G
+
+    env.APIKey = APIKey
+    env.AIModel = AIModel
+    env.ChatCommand = ChatCommand
+    env.TokenCount = TokenCount
+    env.ChatRadius = ChatRadius
+    env.Wandering = Wandering
+    env.WanderDistance = WanderDistance
+    env.WanderWait = WanderWait
+
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/AI%20Chat%20Bot/source.luau"))()
+	return
+end
+
+APIKey = nil
+
 -- ui lib
 local Starlight = loadstring(game:HttpGet("https://raw.githubusercontent.com/Nebula-Softworks/Starlight-Interface-Suite/refs/heads/master/Source.lua"))()
 
@@ -11,7 +63,7 @@ local env = (type(getgenv) == "function" and getgenv()) or shared or _G
 
 env.SecureMode = true
 
-local ver = "V1.0.0"
+local ver = "V1.0.2"
 
 local win = Starlight:CreateWindow({
     Name = "Bot Loader",
@@ -87,15 +139,6 @@ local acbgb = acbtb:CreateGroupbox({
     Name = "Loader",
     Columns = 1,
 }, "ACB2")
-
-local APIKey = nil
-local AIModel = "nvidia/nemotron-3.5-super-vl:free"
-local ChatCommand = "/ai "
-local TokenCount = 200
-local ChatRadius = 35
-local Wandering = true
-local WanderDistance = 40
-local WanderWait = 3
 
 local acbbtn = acbgb:CreateButton({
     Name = "Load Script",
