@@ -32,6 +32,8 @@ local mxp = game.Players.MaxPlayers
 local plg = #p:GetPlayers()
 local knownPlayerNames = {}
 local playerMemories = {}
+local serverChatHistory = {}
+local MAX_SERVER_HISTORY = 25
 
 local function refreshPlayerNames()
 	for _, pl in ipairs(p:GetPlayers()) do
@@ -122,6 +124,40 @@ local function buildPlayerMemoryText(player)
 		table.insert(lines, "- " .. memory)
 	end
 	return "Player memory:\n" .. table.concat(lines, "\n")
+end
+
+local function addServerHistory(player, text)
+	local cleaned = tostring(text):gsub("^%s+", ""):gsub("%s+$", "")
+	if cleaned == "" then return end
+
+	table.insert(serverChatHistory, {
+		playerName = player and (player.DisplayName or player.Name or "Unknown") or "Unknown",
+		username = player and (player.Name or "Unknown") or "Unknown",
+		userId = player and (player.UserId or 0) or 0,
+		text = cleaned
+	})
+
+	while #serverChatHistory > MAX_SERVER_HISTORY do
+		table.remove(serverChatHistory, 1)
+	end
+end
+
+local function buildServerHistoryPrompt()
+	if #serverChatHistory == 0 then
+		return "Server chat history: none yet."
+	end
+
+	local lines = { "Server chat history:" }
+	for _, entry in ipairs(serverChatHistory) do
+		table.insert(lines, string.format(
+			"%s (%s) [UserId: %d]: %s",
+			entry.playerName,
+			entry.username,
+			entry.userId,
+			entry.text
+		))
+	end
+	return table.concat(lines, "\n")
 end
 
 pcall(function()
@@ -241,15 +277,16 @@ local function buildChatContext(speaker)
 		local uname = speaker.Name or "Unknown"
 		local uidVal = speaker.UserId or 0
 		return string.format(
-			"Speaker details: display name=%s, username=%s, userId=%d\nPlayer memory:\n%s\nCurrent server players: %s\n\n",
+			"Speaker details: display name=%s, username=%s, userId=%d\nPlayer memory:\n%s\nCurrent server players: %s\n\n%s\n\n",
 			dname,
 			uname,
 			uidVal,
 			memoryText,
-			playerString
+			playerString,
+			buildServerHistoryPrompt()
 		)
 	end
-	return "Player memory:\n" .. memoryText .. "\nCurrent server players: " .. playerString .. "\n\n"
+	return "Player memory:\n" .. memoryText .. "\nCurrent server players: " .. playerString .. "\n\n" .. buildServerHistoryPrompt() .. "\n\n"
 end
 local function ask(txt, speaker)
 	local key = env.GeminiKey or env.APIKey
@@ -409,6 +446,7 @@ t.MessageReceived:Connect(function(msg)
 		if memoryFact then
 			addPlayerMemory(spk, memoryFact)
 		end
+		addServerHistory(spk, q)
 		busy = true
 		ch("Thinking...")
 		local rpl = ask(q, spk)
