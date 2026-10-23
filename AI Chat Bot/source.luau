@@ -291,9 +291,11 @@ end
 local function ask(txt, speaker)
 	local key = k
 	local model = m or "gemini-2.0-flash"
+
 	if not key or key == "" then
 		return "Gemini API key missing."
 	end
+
 	local promptText = buildChatContext(speaker) .. txt
 	local body = {
 		systemInstruction = {
@@ -315,29 +317,43 @@ local function ask(txt, speaker)
 			topP = 0.9
 		}
 	}
+
+	local headers = {
+		["Content-Type"] = "application/json"
+	}
+
+	if string.sub(tostring(key), 1, 4) == "AIza" then
+		headers["x-goog-api-key"] = tostring(key)
+	else
+		headers["Authorization"] = "Bearer " .. tostring(key)
+	end
+
 	local ok, res = pcall(function()
 		return rq({
-			Url = "https://generativelanguage.googleapis.com/v1beta/models/" .. model .. ":generateContent?key=" .. key,
+			Url = "https://generativelanguage.googleapis.com/v1beta/models/" .. model .. ":generateContent",
 			Method = "POST",
-			Headers = {
-				["Content-Type"] = "application/json"
-			},
+			Headers = headers,
 			Body = h:JSONEncode(body)
 		})
 	end)
+
 	if not ok or not res then
 		return "Request failed: " .. tostring(res)
 	end
+
 	local responseText = type(res.Body) == "string" and res.Body or h:JSONEncode(res.Body or {})
 	local decodeOkay, data = pcall(function()
 		return h:JSONDecode(responseText)
 	end)
+
 	if not decodeOkay then
 		return "Invalid JSON reply from Gemini."
 	end
+
 	if data and data.error then
 		return "Gemini error: " .. tostring(data.error.message or data.error.code or "unknown")
 	end
+
 	if data and data.candidates and data.candidates[1] then
 		local candidate = data.candidates[1]
 		local parts = candidate and candidate.content and candidate.content.parts
@@ -353,10 +369,12 @@ local function ask(txt, speaker)
 				return text:gsub("^%s+", ""):gsub("%s+$", "")
 			end
 		end
+
 		if type(candidate.text) == "string" and candidate.text ~= "" then
 			return candidate.text:gsub("^%s+", ""):gsub("%s+$", "")
 		end
 	end
+
 	return "No valid reply received."
 end
 local function nr(plr)
