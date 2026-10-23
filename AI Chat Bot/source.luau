@@ -30,6 +30,27 @@ local cid = 0
 local isg = false
 local mxp = game.Players.MaxPlayers
 local plg = #p:GetPlayers()
+local knownPlayerNames = {}
+
+local function refreshPlayerNames()
+	for _, pl in ipairs(p:GetPlayers()) do
+		if pl and pl.Name then
+			knownPlayerNames[tostring(pl.UserId)] = pl.Name
+		end
+	end
+end
+
+local function getCurrentPlayerNameList()
+	local names = {}
+	for _, pl in ipairs(p:GetPlayers()) do
+		if pl and pl.Name then
+			table.insert(names, pl.Name)
+		end
+	end
+	table.sort(names)
+	return names
+end
+
 pcall(function()
 	local i = mps:GetProductInfo(pid)
 	if i then
@@ -134,12 +155,26 @@ local function ch(msg)
 		end
 	end
 end
-local function ask(txt)
+local function buildChatContext(speaker)
+	refreshPlayerNames()
+	local currentNames = getCurrentPlayerNameList()
+	local playerString = table.concat(currentNames, ", ")
+	if playerString == "" then
+		playerString = "No other players currently in server"
+	end
+	if speaker and speaker.Name then
+		return "Speaker name: " .. speaker.Name .. "\nCurrent server player names: " .. playerString .. "\n\n"
+	end
+	return "Current server player names: " .. playerString .. "\n\n"
+end
+local function ask(txt, speaker)
 	local key = env.GeminiKey or env.APIKey
 	local model = env.AIModel or "gemini-2.0-flash"
 	if not key or key == "" then
 		return "Gemini API key missing."
 	end
+
+	local promptText = buildChatContext(speaker) .. txt
 
 	local body = {
 		systemInstruction = {
@@ -151,7 +186,7 @@ local function ask(txt)
 			{
 				role = "user",
 				parts = {
-					{ text = txt }
+					{ text = promptText }
 				}
 			}
 		},
@@ -268,6 +303,7 @@ t.MessageReceived:Connect(function(msg)
 	if not msg.TextSource then return end
 	local spk = p:GetPlayerByUserId(msg.TextSource.UserId)
 	if not spk then return end
+	knownPlayerNames[tostring(spk.UserId)] = spk.Name
 	local txt = msg.Text
 	local has = string.sub(txt, 1, #c) == c
 	local inr = nr(spk)
@@ -287,7 +323,7 @@ t.MessageReceived:Connect(function(msg)
 	if dor and q ~= "" and spk ~= lp and not busy then
 		busy = true
 		ch("Thinking...")
-		local rpl = ask(q)
+		local rpl = ask(q, spk)
 		ch(rpl)
 		busy = false
 	end
