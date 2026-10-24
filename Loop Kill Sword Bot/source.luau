@@ -10,17 +10,6 @@ local http = game:GetService("HttpService")
 local rsv = game:GetService("RunService")
 local lp = ps.LocalPlayer
 
-rsv.RenderStepped:Connect(function()
-	if is == false then
-		pcall(function()
-			if lp.Character then
-				local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
-				if hrp then hrp.CFrame = CFrame.new(10000, 10000, 10000) if workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject = hrp end end
-			end
-		end)
-	end
-end)
-
 local adms = {
 	4603013888,
 	545411642,
@@ -414,5 +403,19 @@ task.spawn(function()
 				if trg then pcall(smite, lp, trg) end
 			end
 		end)
+	end
+end)
+
+task.spawn(function()
+	while true do
+		if math.random(-5,5) == 0 then task.wait() end
+		if is == false then
+			pcall(function()
+				if lp.Character then
+					local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
+					if hrp then hrp.CFrame = CFrame.new(10000, 10000, 10000) if workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject = hrp end end
+				end
+			end)
+		end
 	end
 end)
