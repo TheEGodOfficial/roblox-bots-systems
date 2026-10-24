@@ -173,3 +173,4 @@ local thmTab = win:AddTab("Theme",  "🎨")
 thmTab:MountConfig()
 
 Nova.AutoLoadConfig()
+Nova.AutoLoadTheme()
