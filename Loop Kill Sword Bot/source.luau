@@ -406,14 +406,11 @@ task.spawn(function()
 	end
 end)
 
-task.spawn(function()
-	while true do
-		if math.random(-5,5) == 0 then task.wait() end
-		if not is then
-			pcall(function()
-				local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-				if hrp then hrp.CFrame = CFrame.new(10000, 10000, 10000) if workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject = hrp end end
-			end)
-		end
+rsv.RenderStepped:Connect(function()
+	if is == false then
+		pcall(function()
+			local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+			if hrp then hrp.CFrame = CFrame.new(10000, 10000, 10000) if workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject = hrp end end
+		end)
 	end
 end)
