@@ -63,27 +63,26 @@ local function srd()
 end
 
 local function swd(t)
-	pcall(function()
-		if writefile then
-			writefile("BotLoopData/Data.json", http:JSONEncode(t))
-		end
-	end)
+	if writefile then
+		writefile("BotLoopData/Data.json", http:JSONEncode(t))
+	end
 end
 
 if isfile and isfolder and makefolder and writefile and readfile then
-	pcall(function()
-		if not isfolder("BotLoopData") then makefolder("BotLoopData") end
-		if not isfile("BotLoopData/Data.json") then
-			data = {}
-			writefile("BotLoopData/Data.json", http:JSONEncode(data))
-		else
-			data = srd()
-		end
-	end)
+	if not isfolder("BotLoopData") then makefolder("BotLoopData") end
+	if not isfile("BotLoopData/Data.json") then
+		data = {}
+		writefile("BotLoopData/Data.json", http:JSONEncode(data))
+	else
+		data = srd()
+	end
 else
-	pcall(function()
-		tcs:WaitForChild("TextChannels"):WaitForChild("RBXGeneral"):SendAsync("Exe doesnt support file system functions")
-	end)
+	if tcs:FindFirstChild("TextChannels") then
+		local c = tcs.TextChannels:FindFirstChild("RBXGeneral")
+		if c then
+			c:SendAsync("Exe doesnt support file system functions")
+		end
+	end
 end
 
 local function gp(arg)
@@ -196,16 +195,14 @@ local function smite(adm, trg)
 	end
 	is = true
 
-	local s
-	pcall(function()
-		s = adm.Backpack:FindFirstChild(t.Name) or ac:FindFirstChild(t.Name)
-	end)
+	local s = nil
+	s = adm.Backpack:FindFirstChild(t.Name) or ac:FindFirstChild(t.Name) or nil
 	if not s then
 		is = false
 		return
 	end
 
-	pcall(function() ah:EquipTool(s) end)
+	if ah then ah:EquipTool(s) end
 	task.wait(0.2)
 
 	local st = os.clock()
@@ -220,16 +217,14 @@ local function smite(adm, trg)
 		if not ah.Parent or ah.Health <= 0 or s.Parent ~= ac then break end
 		if not table.find(lpd, trg.Name) then break end
 
-		pcall(function()
+		if ar and tr and s then
 			ar.CFrame = CFrame.lookAt((tr.CFrame * CFrame.new(0, 0, 2.5)).Position, tr.Position)
 			s:Activate()
-		end)
+		end
 		task.wait(ad)
 	end
 
-	pcall(function()
-		if ah and ah.Parent then ah:UnequipTools() end
-	end)
+	if ah and ah.Parent then ah:UnequipTools() end
 	is = false
 end
 
@@ -251,7 +246,7 @@ function cmds(msg, plr)
 	if ck then
 		local trg = gp(ck)
 		if trg and trg ~= plr then
-			task.spawn(function() pcall(smite, lp, trg) end)
+			task.spawn(function() smite(lp, trg) end)
 		end
 	end
 
@@ -262,7 +257,7 @@ function cmds(msg, plr)
 				while true do
 					task.wait(0.1)
 					if not table.find(lpd, trg.Name) or not trg.Parent then break end
-					pcall(smite, lp, trg)
+					smite(lp, trg)
 				end
 			end)
 		end
@@ -301,81 +296,89 @@ function cmds(msg, plr)
 
 	if ch then
 		task.spawn(function()
-			pcall(function()
-				local c = tcs:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
-				c:SendAsync("USE THESE COMMANDS FOR GOOD!!! EXAMPLE: SOMEONE IS REACH EXPLOITING.")
-				task.wait(msgcd)
-				c:SendAsync("NOTE: THESE COMMANDS HAVE A WHITELIST SO DO NOT TRY THEM!")
-				task.wait(msgcd)
-				c:SendAsync("COMMANDS:")
-				task.wait(msgcd)
-				c:SendAsync("/smite [name/display/userid] - kills the player")
-				task.wait(msgcd)
-				c:SendAsync("/loop [name/display/userid] - temporarily loops the player for that server")
-				task.wait(msgcd)
-				c:SendAsync("/unloop [name/display/userid] - unloops the player")
-				task.wait(msgcd)
-				c:SendAsync("/saveloop [name/display/userid] - saves player name to json file in executor workspace to loop them")
-				task.wait(msgcd)
-				c:SendAsync("/saveunloop [name/display/userid] - removes player name from the json file in executor workspace")
-				task.wait(msgcd)
-				c:SendAsync("/temploops - lets you see what users are in the temporary loop kill list")
-				task.wait(msgcd)
-				c:SendAsync("/permloops - lets you see the users of permanently loop killed people")
-				task.wait(msgcd)
-				c:SendAsync("/admins - see the list of people whitelisted")
-				task.wait(msgcd)
-				c:SendAsync("/cmds - this command you used that shows this list")
-			end)
+			if tcs:FindFirstChild("TextChannels") then
+				local c = tcs.TextChannels:FindFirstChild("RBXGeneral")
+				if c then
+					c:SendAsync("USE THESE COMMANDS FOR GOOD!!! EXAMPLE: SOMEONE IS REACH EXPLOITING.")
+					task.wait(msgcd)
+					c:SendAsync("NOTE: THESE COMMANDS HAVE A WHITELIST SO DO NOT TRY THEM!")
+					task.wait(msgcd)
+					c:SendAsync("COMMANDS:")
+					task.wait(msgcd)
+					c:SendAsync("/smite [name/display/userid] - kills the player")
+					task.wait(msgcd)
+					c:SendAsync("/loop [name/display/userid] - temporarily loops the player for that server")
+					task.wait(msgcd)
+					c:SendAsync("/unloop [name/display/userid] - unloops the player")
+					task.wait(msgcd)
+					c:SendAsync("/saveloop [name/display/userid] - saves player name to json file in executor workspace to loop them")
+					task.wait(msgcd)
+					c:SendAsync("/saveunloop [name/display/userid] - removes player name from the json file in executor workspace")
+					task.wait(msgcd)
+					c:SendAsync("/temploops - lets you see what users are in the temporary loop kill list")
+					task.wait(msgcd)
+					c:SendAsync("/permloops - lets you see the users of permanently loop killed people")
+					task.wait(msgcd)
+					c:SendAsync("/admins - see the list of people whitelisted")
+					task.wait(msgcd)
+					c:SendAsync("/cmds - this command you used that shows this list")
+				end
+			end
 		end)
 	end
 
 	if cp then
 		task.spawn(function()
-			pcall(function()
-				local c = tcs:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
-				c:SendAsync("PERM LOOPED PLAYERS:")
-				local l = srd()
-				if #l == 0 then
-					c:SendAsync("No one.")
-				else
-					for _, n in pairs(l) do
-						task.wait(msgcd)
-						c:SendAsync(tostring(n))
+			if tcs:FindFirstChild("TextChannels") then
+				local c = tcs.TextChannels:FindFirstChild("RBXGeneral")
+				if c then
+					c:SendAsync("PERM LOOPED PLAYERS:")
+					local l = srd()
+					if #l == 0 then
+						c:SendAsync("No one.")
+					else
+						for _, n in pairs(l) do
+							task.wait(msgcd)
+							c:SendAsync(tostring(n))
+						end
 					end
 				end
-			end)
+			end
 		end)
 	end
 
 	if ct then
 		task.spawn(function()
-			pcall(function()
-				local c = tcs:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
-				c:SendAsync("TEMP LOOPED PLAYERS:")
-				if #lpd == 0 then
-					c:SendAsync("No one.")
-				else
-					for _, n in pairs(lpd) do
-						task.wait(msgcd)
-						c:SendAsync(tostring(n))
+			if tcs:FindFirstChild("TextChannels") then
+				local c = tcs.TextChannels:FindFirstChild("RBXGeneral")
+				if c then
+					c:SendAsync("TEMP LOOPED PLAYERS:")
+					if #lpd == 0 then
+						c:SendAsync("No one.")
+					else
+						for _, n in pairs(lpd) do
+							task.wait(msgcd)
+							c:SendAsync(tostring(n))
+						end
 					end
 				end
-			end)
+			end
 		end)
 	end
 
 	if ca then
 		task.spawn(function()
-			pcall(function()
-				local c = tcs:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
-				c:SendAsync("ADMINS/WHITELISTED PEOPLE:")
-				for _, id in pairs(adms) do
-					task.wait(msgcd)
-					local s, n = pcall(function() return ps:GetNameFromUserIdAsync(id) end)
-					c:SendAsync(s and n or "Failed to load.")
+			if tcs:FindFirstChild("TextChannels") then
+				local c = tcs.TextChannels:FindFirstChild("RBXGeneral")
+				if c then
+					c:SendAsync("ADMINS/WHITELISTED PEOPLE:")
+					for _, id in pairs(adms) do
+						task.wait(msgcd)
+						local s, n = pcall(function() return ps:GetNameFromUserIdAsync(id) end)
+						c:SendAsync(s and n or "Failed to load.")
+					end
 				end
-			end)
+			end
 		end)
 	end
 
@@ -400,7 +403,7 @@ task.spawn(function()
 			local l = srd()
 			for _, n in pairs(l) do
 				local trg = ps:FindFirstChild(n)
-				if trg then pcall(smite, lp, trg) end
+				if trg then smite(lp, trg) end
 			end
 		end)
 	end
@@ -410,12 +413,10 @@ task.spawn(function()
 	while true do
 		if math.random(-5,5) == 0 then task.wait() end
 		if is == false then
-			pcall(function()
-				if lp.Character then
-					local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
-					if hrp then hrp.CFrame = CFrame.new(10000, 10000, 10000) if workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject = hrp end end
-				end
-			end)
+			if lp.Character then
+				local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
+				if hrp then hrp.CFrame = CFrame.new(10000, 10000, 10000) if workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject = hrp end end
+			end
 		end
 	end
 end)
