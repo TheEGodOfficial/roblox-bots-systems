@@ -169,4 +169,7 @@ acbTab:AddSlider{
 local cfgTab = win:AddTab("Config", "⚙️")
 cfgTab:MountConfig()
 
+local thmTab = win:AddTab("Theme",  "🎨")
+thmTab:MountConfig()
+
 Nova.AutoLoadConfig()
