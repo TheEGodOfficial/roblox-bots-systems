@@ -21,7 +21,7 @@ local Nova = loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodO
 
 local win = Nova.Window{
     Title = "Bot Loader",
-    Subtitle = "V1.0.3",
+    Subtitle = "V1.0.4",
 }
 
 local sfbTab = win:AddTab("Sword Fight Bot", "⚔️")
