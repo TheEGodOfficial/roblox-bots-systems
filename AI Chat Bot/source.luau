@@ -295,8 +295,6 @@ local function aq(txt, spk)
 			re = "none"
 		elseif model:find("^gemini%-2%.5%-pro") then
 			re = "low"
-		elseif model:find("^gemini%-3") or model:find("^gemini%-4") or model:find("%-latest$") then
-			re = "minimal"
 		end
 		if re then bd.reasoning_effort = re end
 		return bd
