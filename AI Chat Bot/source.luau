@@ -435,21 +435,35 @@ task.spawn(function()
 	end
 end)
 
-local function pwg()
-	local angle = math.random() * math.pi * 2
-	local dist = math.random(math.floor(wd * 0.3), wd)
-	local offset = Vector3.new(math.cos(angle) * dist, 0, math.sin(angle) * dist)
-	local candidate = sp + offset
-	local rayOrigin = candidate + Vector3.new(0, 50, 0)
-	local rayDirection = Vector3.new(0, -120, 0)
-	local rayParams = RaycastParams.new()
-	rayParams.FilterType = Enum.RaycastFilterType.Exclude
-	rayParams.FilterDescendantsInstances = { lp.Character or game:GetService("Workspace") }
-	local result = game:GetService("Workspace"):Raycast(rayOrigin, rayDirection, rayParams)
-	if result then
-		return result.Position + Vector3.new(0, 3, 0)
+local function pwg(origin, range)
+	origin = origin or sp
+	range = range or wd
+	local ws = game:GetService("Workspace")
+	local best = nil
+	local bestScore = -math.huge
+
+	for _ = 1, 8 do
+		local angle = math.random() * math.pi * 2
+		local dist = math.random(math.floor(range * 0.3), range)
+		local offset = Vector3.new(math.cos(angle) * dist, 0, math.sin(angle) * dist)
+		local candidate = origin + offset
+
+		local rayParams = RaycastParams.new()
+		rayParams.FilterType = Enum.RaycastFilterType.Exclude
+		rayParams.FilterDescendantsInstances = { lp.Character or ws }
+
+		local hit = ws:Raycast(candidate + Vector3.new(0, 80, 0), Vector3.new(0, -160, 0), rayParams)
+		if hit then
+			local pos = hit.Position + Vector3.new(0, 3, 0)
+			local score = math.random()
+			if best == nil or score > bestScore then
+				best = pos
+				bestScore = score
+			end
+		end
 	end
-	return candidate
+
+	return best or (origin + Vector3.new(math.random(-range, range), 0, math.random(-range, range)))
 end
 
 local function cwp(fr, gl)
@@ -457,8 +471,8 @@ local function cwp(fr, gl)
 		AgentRadius = 2,
 		AgentHeight = 5,
 		AgentCanJump = true,
-		AgentMaxSlope = 60,
-		Costs = { Water = 20 },
+		AgentMaxSlope = 75,
+		Costs = { Water = 20, Climb = 5 },
 	})
 	local ok = pcall(function() pth:ComputeAsync(fr, gl) end)
 	if ok and pth.Status == Enum.PathStatus.Success then return pth, true end
@@ -467,6 +481,7 @@ end
 
 local autoJumpConn = nil
 local unseatConn = nil
+local isMoving = false
 
 local function startUnseat()
 	if unseatConn then unseatConn:Disconnect() end
@@ -480,9 +495,7 @@ local function startUnseat()
 		if hum.Sit then
 			sitTime += dt
 			hum.Sit = false
-			if sitTime >= 0.1 then
-				hum.Jump = true
-			end
+			if sitTime >= 0.1 then hum.Jump = true end
 			if sitTime >= 0.3 then
 				hum.Jump = true
 				sitTime = 0
@@ -503,51 +516,101 @@ end
 local function startAutoJump()
 	if autoJumpConn then autoJumpConn:Disconnect() end
 	local jumpCooldown = 0
+	local edgeCooldown = 0
+	local ws = game:GetService("Workspace")
 	local rayParams = RaycastParams.new()
 	rayParams.FilterType = Enum.RaycastFilterType.Exclude
-	local ws = game:GetService("Workspace")
+
 	autoJumpConn = rs.Heartbeat:Connect(function(dt)
 		if not hum or not hum.Parent or not hrp or not hrp.Parent then
 			autoJumpConn:Disconnect()
 			autoJumpConn = nil
 			return
 		end
+
 		jumpCooldown = math.max(0, jumpCooldown - dt)
-		if hum.MoveDirection.Magnitude <= 0.1 then return end
-		if jumpCooldown > 0 then return end
+		edgeCooldown = math.max(0, edgeCooldown - dt)
 		rayParams.FilterDescendantsInstances = { b }
+
 		local cf = hrp.CFrame
 		local forward = cf.LookVector
 		local right = cf.RightVector
 		local pos = hrp.Position
-		local hit = false
-		local yOffsets = { -2.8, -2, -1.2, -0.4, 0.4, 1 }
-		local xOffsets = { -1.5, -0.75, 0, 0.75, 1.5 }
-		for _, xOff in ipairs(xOffsets) do
-			if hit then break end
-			local sideOffset = right * xOff
-			for _, yOff in ipairs(yOffsets) do
-				local origin = pos + sideOffset + Vector3.new(0, yOff, 0)
-				if ws:Raycast(origin, forward * 3.5, rayParams) then
-					hit = true
-					break
+		local speed = hum.MoveDirection.Magnitude
+
+		-- obstacle wall detection
+		if speed > 0.1 and jumpCooldown <= 0 then
+			local hit = false
+			local yOffsets = { -2.5, -1.5, -0.5, 0.5, 1.2 }
+			local xOffsets = { -1.2, -0.6, 0, 0.6, 1.2 }
+
+			for _, xOff in ipairs(xOffsets) do
+				if hit then break end
+				for _, yOff in ipairs(yOffsets) do
+					local origin = pos + right * xOff + Vector3.new(0, yOff, 0)
+					if ws:Raycast(origin, forward * 3.5, rayParams) then
+						hit = true
+						break
+					end
 				end
 			end
-		end
-		if not hit then
-			local probeOrigin = pos + forward * 3 + Vector3.new(0, 10, 0)
-			local downRes = ws:Raycast(probeOrigin, Vector3.new(0, -15, 0), rayParams)
-			local groundOrigin = pos + Vector3.new(0, 10, 0)
-			local groundRes = ws:Raycast(groundOrigin, Vector3.new(0, -15, 0), rayParams)
-			if downRes and groundRes then
-				if downRes.Position.Y - groundRes.Position.Y > 0.8 then
+
+			-- step/ledge detection ahead
+			if not hit then
+				local probeOrigin = pos + forward * 3 + Vector3.new(0, 10, 0)
+				local downRes = ws:Raycast(probeOrigin, Vector3.new(0, -15, 0), rayParams)
+				local groundOrigin = pos + Vector3.new(0, 10, 0)
+				local groundRes = ws:Raycast(groundOrigin, Vector3.new(0, -15, 0), rayParams)
+				if downRes and groundRes and (downRes.Position.Y - groundRes.Position.Y > 0.8) then
 					hit = true
 				end
 			end
+
+			if hit then
+				hum.Jump = true
+				jumpCooldown = 0.45
+			end
 		end
-		if hit then
-			hum.Jump = true
-			jumpCooldown = 0.5
+
+		-- parkour: gap detection (jump over gaps)
+		if speed > 0.1 and jumpCooldown <= 0 then
+			local frontProbe = pos + forward * 2.5 + Vector3.new(0, 5, 0)
+			local frontGround = ws:Raycast(frontProbe, Vector3.new(0, -10, 0), rayParams)
+			local myGround = ws:Raycast(pos + Vector3.new(0, 5, 0), Vector3.new(0, -10, 0), rayParams)
+
+			if myGround and not frontGround then
+				-- gap ahead, jump
+				hum.Jump = true
+				jumpCooldown = 0.6
+			end
+		end
+
+		-- edge jump: if about to walk off a ledge, jump forward instead of falling
+		if speed > 0.1 and edgeCooldown <= 0 then
+			local edgeProbe = pos + forward * 1.8 + Vector3.new(0, 2, 0)
+			local edgeRes = ws:Raycast(edgeProbe, Vector3.new(0, -8, 0), rayParams)
+			local groundCheck = ws:Raycast(pos + Vector3.new(0, 2, 0), Vector3.new(0, -6, 0), rayParams)
+
+			if groundCheck and not edgeRes then
+				hum.Jump = true
+				edgeCooldown = 0.8
+				jumpCooldown = 0.4
+			end
+		end
+
+		-- wall run attempt: if stuck against a wall and airborne, jump again
+		if jumpCooldown <= 0 then
+			local myGround2 = ws:Raycast(pos + Vector3.new(0, 2, 0), Vector3.new(0, -5, 0), rayParams)
+			if not myGround2 then
+				-- airborne, check for wall to push off of
+				local wallHit = ws:Raycast(pos, forward * 2.5, rayParams)
+					or ws:Raycast(pos, right * 2.5, rayParams)
+					or ws:Raycast(pos, -right * 2.5, rayParams)
+				if wallHit then
+					hum.Jump = true
+					jumpCooldown = 0.5
+				end
+			end
 		end
 	end)
 end
@@ -560,54 +623,114 @@ local function stopAutoJump()
 	stopUnseat()
 end
 
-local function fp(pth)
+local function fp(pth, goal)
 	local wps = pth:GetWaypoints()
 	if not wps or #wps == 0 then return false end
 	startAutoJump()
 	startUnseat()
+
+	local ws = game:GetService("Workspace")
+	local recalcCooldown = 0
+	local lastRecalcPos = hrp and hrp.Position or Vector3.new()
+
 	for i, wp in ipairs(wps) do
 		if not hum or not hum.Parent or hum.Health <= 0 then stopAutoJump(); return false end
 		if not hrp or not hrp.Parent then stopAutoJump(); return false end
+
 		hum:MoveTo(wp.Position)
+
 		if wp.Action == Enum.PathWaypointAction.Jump then
 			hum.Jump = true
 			task.delay(0.1, function() if hum then hum.Jump = true end end)
 			task.delay(0.25, function() if hum then hum.Jump = true end end)
 		end
-		local timeout = math.max(2, (wp.Position - hrp.Position).Magnitude / math.max(hum.WalkSpeed, 1) * 2.5)
+
+		local timeout = math.max(2.5, (wp.Position - hrp.Position).Magnitude / math.max(hum.WalkSpeed, 1) * 2.8)
 		local elapsed = 0
-		local reached = false
 		local stuckT = 0
-		local lastPos2 = hrp.Position
+		local lastPos = hrp.Position
+		local reached = false
+
 		while elapsed < timeout do
 			if not hum or not hum.Parent or hum.Health <= 0 then stopAutoJump(); return false end
 			if not hrp or not hrp.Parent then stopAutoJump(); return false end
-			local dt2 = task.wait()
+
+			local dt2 = task.wait(0.1)
 			elapsed += dt2
+			recalcCooldown = math.max(0, recalcCooldown - dt2)
+
 			local cur = hrp.Position
+
 			if (cur - wp.Position).Magnitude < 3.5 then
 				reached = true
 				break
 			end
-			local moved2 = (cur - lastPos2).Magnitude
-			lastPos2 = cur
-			if hum.MoveDirection.Magnitude > 0.1 and moved2 < 0.05 then
+
+			local moved = (cur - lastPos).Magnitude
+			lastPos = cur
+
+			-- stuck detection
+			if hum.MoveDirection.Magnitude > 0.1 and moved < 0.08 then
 				stuckT += dt2
-				if stuckT > 1.2 then
-					hum:MoveTo(wp.Position)
+
+				if stuckT > 0.8 then
+					-- try jumping out of stuck
 					hum.Jump = true
-					task.wait(0.3)
-					break
+					task.wait(0.15)
+					hum:MoveTo(wp.Position)
+				end
+
+				if stuckT > 2 and recalcCooldown <= 0 and goal then
+					-- recalculate path from current position
+					recalcCooldown = 3
+					local newPth, ok = cwp(cur, goal)
+					if ok then
+						stopAutoJump()
+						return fp(newPth, goal)
+					else
+						-- goal unreachable, try a midpoint
+						local mid = cur + (goal - cur) * 0.5
+						mid = mid + Vector3.new(math.random(-5, 5), 0, math.random(-5, 5))
+						local midPth, midOk = cwp(cur, mid)
+						if midOk then
+							stopAutoJump()
+							return fp(midPth, goal)
+						end
+					end
+					stopAutoJump()
+					return false
 				end
 			else
 				stuckT = 0
 			end
+
+			-- dynamic obstacle check: if something suddenly blocks path, recalc
+			if recalcCooldown <= 0 and goal and (cur - lastRecalcPos).Magnitude > 12 then
+				lastRecalcPos = cur
+				local rayParams2 = RaycastParams.new()
+				rayParams2.FilterType = Enum.RaycastFilterType.Exclude
+				rayParams2.FilterDescendantsInstances = { b }
+				local dir = (wp.Position - cur)
+				if dir.Magnitude > 1 then
+					local blocked = ws:Raycast(cur + Vector3.new(0, 1, 0), dir.Unit * math.min(dir.Magnitude, 6), rayParams2)
+					if blocked then
+						recalcCooldown = 2
+						local newPth, ok = cwp(cur, goal)
+						if ok then
+							stopAutoJump()
+							return fp(newPth, goal)
+						end
+					end
+				end
+			end
 		end
+
 		if not reached and i == #wps then
 			stopAutoJump()
 			return false
 		end
 	end
+
 	stopAutoJump()
 	return true
 end
@@ -615,51 +738,65 @@ end
 if wnd and hum and hrp then
 	task.spawn(function()
 		local failStreak = 0
+		local lastGoal = nil
+
 		while true do
-			local pause = failStreak > 3 and math.max(0.5, ww - 1) or ww + math.random(0, 3)
+			local pause = ww + math.random(0, 3)
+			if failStreak > 3 then pause = math.max(0.5, ww - 1) end
 			task.wait(pause)
+
 			if not hum or not hum.Parent or not hrp or not hrp.Parent or hum.Health <= 0 then
 				continue
 			end
-			local searchMult = math.min(1 + failStreak * 0.25, 2.5)
-			local origWd = wd
-			wd = math.floor(wd * searchMult)
-			local gl = pwg()
+
+			local origin = hrp.Position
+			local searchRange = math.min(wd * (1 + failStreak * 0.3), wd * 2.5)
+			local gl = pwg(origin, searchRange)
+			lastGoal = gl
+
 			local success = false
-			for at = 1, MPA do
+
+			for at = 1, MPA + 2 do
 				if not hrp or not hrp.Parent then break end
+
 				local pth, ok = cwp(hrp.Position, gl)
+
 				if ok then
-					local wlk = fp(pth)
-					if wlk then
+					local walked = fp(pth, gl)
+					if walked then
 						success = true
 						break
 					end
 				end
-				if at < MPA then
-					if at == 1 then
-						local dir = (gl - hrp.Position)
-						local mag = dir.Magnitude
-						if mag > 5 then
-							gl = hrp.Position + dir.Unit * (mag * 0.5)
-						else
-							gl = pwg()
-						end
+
+				-- progressively try closer goals on failure
+				if at <= MPA then
+					local t2 = at / MPA
+					local closer = origin + (gl - origin) * (1 - t2 * 0.4)
+					closer = closer + Vector3.new(math.random(-4, 4), 0, math.random(-4, 4))
+
+					local hit = game:GetService("Workspace"):Raycast(
+						closer + Vector3.new(0, 80, 0),
+						Vector3.new(0, -160, 0),
+						RaycastParams.new()
+					)
+					if hit then
+						gl = hit.Position + Vector3.new(0, 3, 0)
 					else
-						gl = pwg()
+						gl = pwg(origin, searchRange * (1 - t2 * 0.3))
 					end
-					task.wait(0.3)
 				end
+
+				task.wait(0.3)
 			end
-			wd = origWd
+
 			if success then
 				failStreak = 0
 			else
 				failStreak += 1
-				if failStreak >= 6 and hrp and hrp.Parent then
-					warn("Debug AI: wander stuck, nudging position")
-					local nudge = Vector3.new(math.random(-4, 4), 1, math.random(-4, 4))
-					hrp.CFrame = hrp.CFrame + nudge
+				if failStreak >= 5 and hrp and hrp.Parent then
+					warn("Debug AI: wander stuck hard, teleporting slightly")
+					hrp.CFrame = hrp.CFrame + Vector3.new(math.random(-6, 6), 2, math.random(-6, 6))
 					failStreak = 0
 				end
 			end
