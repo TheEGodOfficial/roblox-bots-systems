@@ -412,7 +412,7 @@ task.spawn(function()
 		if not is then
 			pcall(function()
 				local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-				if hrp then hrp.CFrame = CFrame.new(10000, 10000, 10000) end
+				if hrp then hrp.CFrame = CFrame.new(10000, 10000, 10000) if workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject = hrp end end
 			end)
 		end
 	end
