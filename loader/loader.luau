@@ -170,7 +170,10 @@ local cfgTab = win:AddTab("Config", "⚙️")
 cfgTab:MountConfig()
 
 local thmTab = win:AddTab("Theme",  "🎨")
-thmTab:MountTheme()
+local ok, err = pcall(function()
+    thmTab:MountTheme()
+end)
+print("MountTheme result:", ok, err)
 
 Nova.AutoLoadConfig()
 Nova.AutoLoadTheme()
