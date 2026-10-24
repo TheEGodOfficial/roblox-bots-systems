@@ -408,7 +408,7 @@ end)
 
 task.spawn(function()
 	while true do
-		rsv.RenderStepped:Wait()
+		if math.random(-5,5) == 0 then task.wait() end
 		if not is then
 			pcall(function()
 				local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
