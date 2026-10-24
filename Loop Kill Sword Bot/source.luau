@@ -407,7 +407,8 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-	while rsv.RenderStepped:Wait() do
+	while true do
+		rsv.RenderStepped:Wait()
 		if not is then
 			pcall(function()
 				local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
