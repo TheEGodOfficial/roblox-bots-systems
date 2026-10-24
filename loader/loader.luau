@@ -166,7 +166,7 @@ acbTab:AddSlider{
     Callback = function(v) WanderWait = v end,
 }
 
-Nova.AutoLoadConfig()
-
 local cfgTab = win:AddTab("Config", "⚙️")
 cfgTab:MountConfig()
+
+Nova.AutoLoadConfig()
