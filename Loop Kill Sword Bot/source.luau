@@ -17,6 +17,7 @@ local ct = 8
 local md = 3
 local dd = "BotLoopData"
 local df = "BotLoopData/Data.json"
+local ver = "1.0.6"
 local ad = {
 	4603013888,
 	545411642,
@@ -440,3 +441,4 @@ task.spawn(function()
 		end
 	end
 end)
+print("Loop Kill Sword Bot V"..ver.." loaded.")
