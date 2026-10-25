@@ -216,6 +216,7 @@ local function nf(targetHrp)
 		if h and h.Parent then h.PlatformStand = false end
 		if targetHrp and targetHrp.Parent then
 			hrp.CFrame = targetHrp.CFrame
+			pcall(sethiddenproperty, hrp, "PhysicsRepRootRef", InstanceHandle.new(targetHrp))
 		end
 		hrp.AssemblyLinearVelocity = Vector3.new(nan, nan, nan)
 		hrp.AssemblyAngularVelocity = Vector3.new(nan, nan, nan)
