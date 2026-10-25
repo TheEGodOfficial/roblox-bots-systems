@@ -3,20 +3,20 @@ MIT License
 
 Copyright (c) 2026 E God/Fred
 ]]
-local sv  = game:GetService("Players")
+local sv = game:GetService("Players")
 local tcs = game:GetService("TextChatService")
-local hs  = game:GetService("HttpService")
-local rs  = game:GetService("RunService")
-local lp  = sv.LocalPlayer
-local pc  = CFrame.new(10000, 10000, 10000)
-local of  = CFrame.new(0, 0, 2.5)
-local cd  = 3
+local hs = game:GetService("HttpService")
+local rs = game:GetService("RunService")
+local lp = sv.LocalPlayer
+local pc = CFrame.new(10000, 10000, 10000)
+local of = CFrame.new(0, 0, 2.5)
+local cd = 3
 local swd = 0.2
-local sl  = 60
-local ct  = 8
-local md  = 3
-local dd  = "BotLoopData"
-local df  = "BotLoopData/Data.json"
+local sl = 60
+local ct = 8
+local md = 3
+local dd = "BotLoopData"
+local df = "BotLoopData/Data.json"
 local ad = {
 	4603013888,
 	545411642,
@@ -75,11 +75,11 @@ local sk = {
 	"battleaxe",
 	"hatchet",
 }
-local tl  = {}
-local pl  = {}
-local bz  = {}
-local al  = {}
-local cl  = false
+local tl = {}
+local pl = {}
+local bz = {}
+local al = {}
+local cl = false
 local function sd(m)
 	local tc = tcs:FindFirstChild("TextChannels")
 	local rc = tc and tc:FindFirstChild("RBXGeneral")
@@ -135,7 +135,7 @@ local function fs()
 				local n = i.Name:lower()
 				for _, k in ipairs(sk) do
 					if string.find(n, k, 1, true) then
-						sn[i]     = true
+						sn[i] = true
 						f[#f + 1] = i
 						break
 					end
@@ -148,11 +148,11 @@ local function fs()
 	table.sort(f, function(x, y)
 		local xn, yn = x.Name:lower(), y.Name:lower()
 		local xs = (string.find(xn, "classic") and 3 or 0)
-			+ (string.find(xn, "sword")   and 2 or 0)
-			+ (string.find(xn, "blade")   and 1 or 0)
+			+ (string.find(xn, "sword") and 2 or 0)
+			+ (string.find(xn, "blade") and 1 or 0)
 		local ys = (string.find(yn, "classic") and 3 or 0)
-			+ (string.find(yn, "sword")   and 2 or 0)
-			+ (string.find(yn, "blade")   and 1 or 0)
+			+ (string.find(yn, "sword") and 2 or 0)
+			+ (string.find(yn, "blade") and 1 or 0)
 		return xs > ys
 	end)
 	return f[1]
@@ -193,21 +193,32 @@ rs.RenderStepped:Connect(function()
 	if k then
 		h.PlatformStand = false
 		r.CFrame = CFrame.lookAt((k.CFrame * of).Position, k.Position)
-		sethiddenproperty(r, "PhysicsRepRootRef", InstanceHandle.new(k))
+		pcall(sethiddenproperty, r, "PhysicsRepRootRef", InstanceHandle.new(k))
 	else
 		h.PlatformStand = true
 		r.CFrame = pc
-		r.AssemblyLinearVelocity  = Vector3.zero
+		r.AssemblyLinearVelocity = Vector3.zero
 		r.AssemblyAngularVelocity = Vector3.zero
-		sethiddenproperty(r, "PhysicsRepRootRef", InstanceHandle.new(nil))
+		pcall(sethiddenproperty, r, "PhysicsRepRootRef", InstanceHandle.new(nil))
 	end
 	if cm and cm.CameraSubject ~= r then cm.CameraSubject = r end
 end)
-local function nf()
-	local c   = lp.Character
+local function nf(targetHrp)
+	local c = lp.Character
 	local hrp = c and c:FindFirstChild("HumanoidRootPart")
 	if not hrp then return end
 	local nan = 0 / 0
+	if targetHrp and targetHrp.Parent then
+		local angle = 0
+		local spinSteps = 30
+		for i = 0, spinSteps do
+			angle = (math.pi * 2 / spinSteps) * i
+			hrp.CFrame = targetHrp.CFrame * CFrame.Angles(0, angle, 0)
+			sethiddenproperty(hrp, "AssemblyLinearVelocity",  Vector3.new(nan, nan, nan))
+			sethiddenproperty(hrp, "AssemblyAngularVelocity", Vector3.new(nan, nan, nan))
+			task.wait()
+		end
+	end
 	hrp.CFrame = CFrame.new(nan, nan, nan)
 	sethiddenproperty(hrp, "AssemblyLinearVelocity",  Vector3.new(nan, nan, nan))
 	sethiddenproperty(hrp, "AssemblyAngularVelocity", Vector3.new(nan, nan, nan))
@@ -228,7 +239,7 @@ local function rsm(a, t, ld)
 	if not tc or th.Health <= 0 then return end
 	local s = a.Backpack:FindFirstChild(tw.Name) or ac:FindFirstChild(tw.Name)
 	if not s then return end
-	if ld and math.random(2) == 1 then pcall(nf) end
+	if ld and math.random(2) == 1 then pcall(nf, tr) end
 	ah:EquipTool(s)
 	task.wait(swd)
 	local bl = gb(s)
@@ -258,9 +269,9 @@ local function sm(a, t, ld)
 	if not t or not t.Parent then return end
 	local n = t.Name
 	if bz[n] then return end
-	bz[n]      = true
+	bz[n] = true
 	local ok, e = pcall(rsm, a, t, ld)
-	bz[n]      = nil
+	bz[n] = nil
 	if not ok then warn("[BotLoop] attack error: " .. tostring(e)) end
 end
 local function csm(_, a)
@@ -277,7 +288,7 @@ local function clp(a)
 	task.spawn(function()
 		while sv:FindFirstChild(n) and table.find(tl, n) do
 			if bz[n] then task.wait(0.1)
-			else           sm(lp, t, true) end
+			else sm(lp, t, true) end
 		end
 		al[n] = nil
 	end)
@@ -289,8 +300,8 @@ local function cul(a)
 	if i then table.remove(tl, i) end
 end
 local function csl(a)
-	local t  = fp(a)
-	local n  = t and t.Name or a
+	local t = fp(a)
+	local n = t and t.Name or a
 	local ok = t or pcall(function() return sv:GetUserIdFromNameAsync(n) end)
 	if not ok then return end
 	if not table.find(pl, n) then
