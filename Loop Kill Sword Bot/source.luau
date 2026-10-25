@@ -201,13 +201,18 @@ setsimulationradius(2 ^ 24)
 rs.RenderStepped:Connect(function()
 	local c = lp.Character
 	local r = c and c:FindFirstChild("HumanoidRootPart")
-	if not r then return end
+	local h = c and c:FindFirstChildOfClass("Humanoid")
+	if not r or not h then return end
 	local k = lk()
 	if k then
+		h.PlatformStand = false
 		r.CFrame = CFrame.lookAt((k.CFrame * of).Position, k.Position)
 		sethiddenproperty(r, "PhysicsRepRootRef", k)
 	else
+		h.PlatformStand = true
 		r.CFrame = pc
+		r.AssemblyLinearVelocity = Vector3.zero
+		r.AssemblyAngularVelocity = Vector3.zero
 		sethiddenproperty(r, "PhysicsRepRootRef", nil)
 	end
 	if cm and cm.CameraSubject ~= r then
