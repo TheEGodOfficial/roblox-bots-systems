@@ -85,9 +85,9 @@ local function sd(m)
 	local rc = tc and tc:FindFirstChild("RBXGeneral")
 	if rc then pcall(function() rc:SendAsync(m) end) end
 end
-local io2 = isfile and isfolder and makefolder and writefile and readfile
+local io2 = isfile and isfolder and makefolder and writefile and refile
 local function rp()
-	local ok, r = pcall(function() return hs:JSONDecode(readfile(df)) end)
+	local ok, r = pcall(function() return hs:JSONDecode(refile(df)) end)
 	if ok and type(r) == "table" then
 		local o = {}
 		for _, v in ipairs(r) do
@@ -184,7 +184,7 @@ local function lk()
 	return nil
 end
 local nfActive = false
-setsimulationradius(2 ^ 24)
+setsimulationrius(2 ^ 24)
 rs.RenderStepped:Connect(function()
 	if nfActive then return end
 	local c = lp.Character
@@ -279,10 +279,12 @@ local function sm(a, t, ld)
 end
 local function csm(_, a)
 	local t = fp(a)
+	if table.find(ad, t.UserId) then return end
 	if t and t ~= lp then task.spawn(sm, lp, t, false) end
 end
 local function clp(a)
 	local t = fp(a)
+	if table.find(ad, t.UserId) then return end
 	if not t or t == lp then return end
 	local n = t.Name
 	if not table.find(tl, n) then tl[#tl + 1] = n end
@@ -298,12 +300,14 @@ local function clp(a)
 end
 local function cul(a)
 	local t = fp(a)
+	if table.find(ad, t.UserId) then return end
 	local n = t and t.Name or a
 	local i = table.find(tl, n)
 	if i then table.remove(tl, i) end
 end
 local function csl(a)
 	local t = fp(a)
+	if table.find(ad, t.UserId) then return end
 	local n = t and t.Name or a
 	local ok = t or pcall(function() return sv:GetUserIdFromNameAsync(n) end)
 	if not ok then return end
@@ -314,6 +318,7 @@ local function csl(a)
 end
 local function csu(a)
 	local t = fp(a)
+	if table.find(ad, t.UserId) then return end
 	local n = t and t.Name or a
 	local i = table.find(pl, n)
 	if i then
@@ -353,9 +358,12 @@ local cmdl = {
 	"/cmds - shows this command list",
 }
 local function scm()
+	sd("USE THESE COMMANDS FOR GOOD!!! EXAMPLE: SOMEONE IS REACH EXPLOITING.")
+	task.wait(md)
+	sd("NOTE: THESE COMMANDS HAVE A WHITELIST SO DO NOT TRY THEM!")
 	for i, line in ipairs(cmdl) do
+		task.wait(md)
 		sd(line)
-		if i < #cmdl then task.wait(md) end
 	end
 end
 tcs.MessageReceived:Connect(function(msg)
