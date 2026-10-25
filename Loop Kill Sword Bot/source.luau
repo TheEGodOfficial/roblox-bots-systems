@@ -84,30 +84,23 @@ local sk = {
 local tl = {}
 local pl = {}
 local bz = {}
+local al = {}
 local cl = false
 
 local function sd(m)
 	local tc = tcs:FindFirstChild("TextChannels")
 	local rc = tc and tc:FindFirstChild("RBXGeneral")
-	if rc then
-		pcall(function()
-			rc:SendAsync(m)
-		end)
-	end
+	if rc then pcall(function() rc:SendAsync(m) end) end
 end
 
 local io = isfile and isfolder and makefolder and writefile and readfile
 
 local function rp()
-	local ok, r = pcall(function()
-		return hs:JSONDecode(readfile(df))
-	end)
+	local ok, r = pcall(function() return hs:JSONDecode(readfile(df)) end)
 	if ok and type(r) == "table" then
 		local o = {}
 		for _, v in ipairs(r) do
-			if type(v) == "string" then
-				o[#o + 1] = v
-			end
+			if type(v) == "string" then o[#o + 1] = v end
 		end
 		return o
 	end
@@ -121,11 +114,7 @@ end
 
 if io then
 	if not isfolder(dd) then makefolder(dd) end
-	if isfile(df) then
-		pl = rp()
-	else
-		pcall(writefile, df, "[]")
-	end
+	if isfile(df) then pl = rp() else pcall(writefile, df, "[]") end
 else
 	sd("Exe doesnt support file system functions")
 end
@@ -141,8 +130,7 @@ local function fp(a)
 	end
 	local pt
 	for _, p in ipairs(ps:GetPlayers()) do
-		local n = p.Name:lower()
-		local d = p.DisplayName:lower()
+		local n, d = p.Name:lower(), p.DisplayName:lower()
 		if n == a or d == a then return p end
 		if not pt and (string.find(n, a, 1, true) or string.find(d, a, 1, true)) then
 			pt = p
@@ -152,16 +140,15 @@ local function fp(a)
 end
 
 local function fs()
-	local f = {}
-	local s = {}
+	local f, sn = {}, {}
 	local function sc(c)
 		if not c then return end
 		for _, i in ipairs(c:GetChildren()) do
-			if i:IsA("Tool") and not s[i] then
+			if i:IsA("Tool") and not sn[i] then
 				local n = i.Name:lower()
 				for _, k in ipairs(sk) do
 					if string.find(n, k, 1, true) then
-						s[i] = true
+						sn[i] = true
 						f[#f + 1] = i
 						break
 					end
@@ -172,8 +159,7 @@ local function fs()
 	sc(lp:FindFirstChild("Backpack"))
 	sc(lp.Character)
 	table.sort(f, function(x, y)
-		local xn = x.Name:lower()
-		local yn = y.Name:lower()
+		local xn, yn = x.Name:lower(), y.Name:lower()
 		local xs = (string.find(xn, "classic") and 3 or 0) + (string.find(xn, "sword") and 2 or 0) + (string.find(xn, "blade") and 1 or 0)
 		local ys = (string.find(yn, "classic") and 3 or 0) + (string.find(yn, "sword") and 2 or 0) + (string.find(yn, "blade") and 1 or 0)
 		return xs > ys
@@ -189,9 +175,7 @@ local function wfc(p, t)
 		if c and c.Parent then
 			local h = c:FindFirstChildOfClass("Humanoid")
 			local r = c:FindFirstChild("HumanoidRootPart")
-			if h and r and h.Parent and r.Parent then
-				return c, h, r
-			end
+			if h and r and h.Parent and r.Parent then return c, h, r end
 		end
 		task.wait(0.05)
 	until os.clock() >= d
@@ -203,16 +187,16 @@ local cm = workspace.CurrentCamera
 local function lk()
 	for n in pairs(bz) do
 		local p = ps:FindFirstChild(n)
-		if p and p.Parent then
+		if p then
 			local c = p.Character
 			local r = c and c:FindFirstChild("HumanoidRootPart")
-			if r and r.Parent then
-				return r
-			end
+			if r and r.Parent then return r end
 		end
 	end
 	return nil
 end
+
+setsimulationradius(2 ^ 24)
 
 rs.RenderStepped:Connect(function()
 	local c = lp.Character
@@ -221,33 +205,56 @@ rs.RenderStepped:Connect(function()
 	local k = lk()
 	if k then
 		r.CFrame = CFrame.lookAt((k.CFrame * of).Position, k.Position)
+		sethiddenproperty(r, "PhysicsRepRootRef", k)
 	else
 		r.CFrame = pc
+		sethiddenproperty(r, "PhysicsRepRootRef", nil)
 	end
 	if cm and cm.CameraSubject ~= r then
 		cm.CameraSubject = r
 	end
 end)
 
-local function rsm(a, t)
+local function nf()
+	local c = lp.Character
+	local hrp = c and c:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+	local nan = 0 / 0
+	hrp.CFrame = CFrame.new(nan, nan, nan)
+	sethiddenproperty(hrp, "AssemblyLinearVelocity", Vector3.new(nan, nan, nan))
+	sethiddenproperty(hrp, "AssemblyAngularVelocity", Vector3.new(nan, nan, nan))
+end
+
+local function gb(tool)
+	return tool:FindFirstChild("Blade")
+		or tool:FindFirstChild("Handle")
+		or tool:FindFirstChildOfClass("MeshPart")
+		or tool:FindFirstChildOfClass("UnionOperation")
+		or tool:FindFirstChildOfClass("Part")
+end
+
+local function rsm(a, t, ld)
 	local tw = fs()
-	if not tw then
-		warn("[BotLoop] no sword found")
-		return
-	end
+	if not tw then warn("[BotLoop] no sword found") return end
+
 	local ac, ah = wfc(a, ct)
 	if not ac then return end
+
 	local tc, th, tr = wfc(t, ct)
 	if not tc or th.Health <= 0 then return end
-	if not table.find(tl, t.Name) then
-		table.insert(tl, t.Name)
-	end
+
 	local s = a.Backpack:FindFirstChild(tw.Name) or ac:FindFirstChild(tw.Name)
 	if not s then return end
+
+	if ld and math.random(2) == 1 then pcall(nf) end
+
 	ah:EquipTool(s)
 	task.wait(swd)
-	local d = os.clock() + sl
-	while os.clock() < d do
+
+	local bl = gb(s)
+	local dl = os.clock() + sl
+
+	while os.clock() < dl do
 		if not t.Parent then break end
 		if not (th.Parent and tr.Parent) then
 			tc, th, tr = wfc(t, 5)
@@ -256,48 +263,53 @@ local function rsm(a, t)
 		if th.Health <= 0 then break end
 		if not (ah.Parent and ah.Health > 0) then break end
 		if s.Parent ~= ac then break end
-		if not table.find(tl, t.Name) then break end
+		if ld and not (table.find(tl, t.Name) or table.find(pl, t.Name)) then break end
+		if bl and tr and tr.Parent then
+			pcall(firetouchinterest, bl, tr, 0)
+		end
 		s:Activate()
 		task.wait(swd)
+		if bl and tr and tr.Parent then
+			pcall(firetouchinterest, bl, tr, 1)
+		end
 	end
-	if ah.Parent then
-		ah:UnequipTools()
-	end
+
+	if ah.Parent then ah:UnequipTools() end
 end
 
-local function sm(a, t)
+local function sm(a, t, ld)
 	if not t or not t.Parent then return end
 	local n = t.Name
 	if bz[n] then return end
 	bz[n] = true
-	local ok, e = pcall(rsm, a, t)
+	local ok, e = pcall(rsm, a, t, ld)
 	bz[n] = nil
-	if not ok then
-		warn("[BotLoop] smite error: " .. tostring(e))
-	end
+	if not ok then warn("[BotLoop] attack error: " .. tostring(e)) end
 end
 
-local function csm(p, a)
+local function csm(_, a)
 	local t = fp(a)
-	if t and t ~= p then
-		task.spawn(sm, lp, t)
+	if t and t ~= lp then
+		task.spawn(sm, lp, t, false)
 	end
 end
 
 local function clp(a)
 	local t = fp(a)
 	if not t or t == lp then return end
-	if not table.find(tl, t.Name) then
-		table.insert(tl, t.Name)
-	end
+	local n = t.Name
+	if not table.find(tl, n) then table.insert(tl, n) end
+	if al[n] then return end
+	al[n] = true
 	task.spawn(function()
-		while t.Parent and table.find(tl, t.Name) do
-			if bz[t.Name] then
+		while ps:FindFirstChild(n) and table.find(tl, n) do
+			if bz[n] then
 				task.wait(0.1)
 			else
-				sm(lp, t)
+				sm(lp, t, true)
 			end
 		end
+		al[n] = nil
 	end)
 end
 
@@ -305,17 +317,13 @@ local function cul(a)
 	local t = fp(a)
 	local n = t and t.Name or a
 	local i = table.find(tl, n)
-	if i then
-		table.remove(tl, i)
-	end
+	if i then table.remove(tl, i) end
 end
 
 local function csl(a)
 	local t = fp(a)
 	local n = t and t.Name or a
-	local ok = t or pcall(function()
-		return ps:GetUserIdFromNameAsync(n)
-	end)
+	local ok = t or pcall(function() return ps:GetUserIdFromNameAsync(n) end)
 	if not ok then return end
 	if not table.find(pl, n) then
 		table.insert(pl, n)
@@ -339,9 +347,7 @@ local function an()
 	if anc then return anc end
 	local o = {}
 	for _, i in ipairs(ad) do
-		local ok, n = pcall(function()
-			return ps:GetNameFromUserIdAsync(i)
-		end)
+		local ok, n = pcall(function() return ps:GetNameFromUserIdAsync(i) end)
 		o[#o + 1] = ok and n or ("Failed to load (" .. i .. ")")
 	end
 	anc = o
@@ -350,10 +356,7 @@ end
 
 local function lo(h, l)
 	sd(h)
-	if #l == 0 then
-		sd("No one.")
-		return
-	end
+	if #l == 0 then sd("No one.") return end
 	for _, n in ipairs(l) do
 		task.wait(md)
 		sd(tostring(n))
@@ -362,28 +365,17 @@ end
 
 local function scm()
 	sd("USE THESE COMMANDS FOR GOOD!!! EXAMPLE: SOMEONE IS REACH EXPLOITING.")
-	task.wait(md)
-	sd("NOTE: THESE COMMANDS HAVE A WHITELIST SO DO NOT TRY THEM!")
-	task.wait(md)
-	sd("COMMANDS:")
-	task.wait(md)
-	sd("/smite [name/display/userid] - kills the player")
-	task.wait(md)
-	sd("/loop [name/display/userid] - temporarily loops the player for that server")
-	task.wait(md)
-	sd("/unloop [name/display/userid] - unloops the player")
-	task.wait(md)
-	sd("/saveloop [name/display/userid] - saves player name to json file in executor workspace to loop them")
-	task.wait(md)
-	sd("/saveunloop [name/display/userid] - removes player name from the json file in executor workspace")
-	task.wait(md)
-	sd("/temploops - lets you see what users are in the temporary loop kill list")
-	task.wait(md)
-	sd("/permloops - lets you see the users of permanently loop killed people")
-	task.wait(md)
-	sd("/admins - see the list of people whitelisted")
-	task.wait(md)
-	sd("/cmds - this command you used that shows this list")
+	task.wait(md) sd("NOTE: THESE COMMANDS HAVE A WHITELIST SO DO NOT TRY THEM!")
+	task.wait(md) sd("COMMANDS:")
+	task.wait(md) sd("/smite [name/display/userid] - kills the player")
+	task.wait(md) sd("/loop [name/display/userid] - temporarily loops the player for that server")
+	task.wait(md) sd("/unloop [name/display/userid] - unloops the player")
+	task.wait(md) sd("/saveloop [name/display/userid] - saves player name to json file in executor workspace to loop them")
+	task.wait(md) sd("/saveunloop [name/display/userid] - removes player name from the json file in executor workspace")
+	task.wait(md) sd("/temploops - lets you see what users are in the temporary loop kill list")
+	task.wait(md) sd("/permloops - lets you see the users of permanently loop killed people")
+	task.wait(md) sd("/admins - see the list of people whitelisted")
+	task.wait(md) sd("/cmds - this command you used that shows this list")
 end
 
 local function cd(m, p)
@@ -418,15 +410,11 @@ local function cd(m, p)
 end
 
 local function hk(p)
-	p.Chatted:Connect(function(m)
-		cd(m, p)
-	end)
+	p.Chatted:Connect(function(m) cd(m, p) end)
 end
 
 ps.PlayerAdded:Connect(hk)
-for _, p in ipairs(ps:GetPlayers()) do
-	hk(p)
-end
+for _, p in ipairs(ps:GetPlayers()) do hk(p) end
 
 task.spawn(function()
 	while true do
@@ -434,7 +422,7 @@ task.spawn(function()
 		for _, n in ipairs(pl) do
 			local t = ps:FindFirstChild(n)
 			if t and t.Parent and not bz[n] then
-				task.spawn(sm, lp, t)
+				task.spawn(sm, lp, t, true)
 			end
 		end
 	end
