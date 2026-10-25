@@ -85,9 +85,9 @@ local function sd(m)
 	local rc = tc and tc:FindFirstChild("RBXGeneral")
 	if rc then pcall(function() rc:SendAsync(m) end) end
 end
-local io2 = isfile and isfolder and makefolder and writefile and refile
+local io2 = isfile and isfolder and makefolder and writefile and readfile
 local function rp()
-	local ok, r = pcall(function() return hs:JSONDecode(refile(df)) end)
+	local ok, r = pcall(function() return hs:JSONDecode(readfile(df)) end)
 	if ok and type(r) == "table" then
 		local o = {}
 		for _, v in ipairs(r) do
