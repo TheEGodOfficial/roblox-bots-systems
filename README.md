@@ -57,7 +57,7 @@ MIT License
 Copyright (c) 2026 E God/Fred
 ]]
 
---[[
+--[[ !!!OUTDATED INFORMATION USE LOADER FOR UPDATED MODELS!!!
 	Google Gemini Range-Based AI Chatbot
 
 	SETUP TUTORIAL:
@@ -116,7 +116,7 @@ Copyright (c) 2026 E God/Fred
 local env = (type(getgenv) == "function" and getgenv()) or shared or _G
 
 env.APIKey = "PASTE_YOUR_GEMINI_KEY_HERE"
-env.AIModel = "gemini-2.0-flash"
+env.AIModel = "gemini-3.1-flash-lite"
 env.ChatCommand = "/ai "
 env.TokenCount = 200
 env.ChatRadius = 35
