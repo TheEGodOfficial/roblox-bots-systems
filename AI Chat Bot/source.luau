@@ -429,7 +429,7 @@ end
 
 task.spawn(function()
 	while true do
-		task.wait(10)
+		task.wait(math.random(20,45))
 		if not bs then
 			ch(tps[math.random(1, #tps)])
 		end
