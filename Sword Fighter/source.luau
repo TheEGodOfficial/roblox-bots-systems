@@ -5728,34 +5728,9 @@ local function step(dt)
 		if feintOn then feintDir = PL.feint.kind == "fw" and -fwd or (fwd + right * strafeSign * 0.3) end
 	end
 
-	-- BACK OFF WHILE THEY'RE UNARMED: a player walking at us with no sword out is backed away from, facing them.
-	-- The moment they draw a sword (targetArmed) we fight. Capped at 6s so we can't be pushed around forever.
-	-- back-off is a state that holds: it starts when they close in while unarmed, and stops only when they're out of
-	-- range, draw a sword, or we've been at it 6s (then a 4s rest). Before, the trigger was re-checked every frame, so
-	-- backing off pushed them past the trigger, the bot chased, closed in again, and flipped back and forth.
-	local backNow = (not targetArmed) and d < 14 and not leap
-	local closingIn = tVel:Dot(fwd) > 1.5 or d < 6
-	if X.backing then
-		if not backNow then
-			X.backing = false
-		elseif now - (X.backoffSince or now) >= 6 then
-			X.backing = false
-			X.backoffCoolUntil = now + 4
-		end
-	elseif backNow and closingIn and now >= (X.backoffCoolUntil or 0) then
-		X.backing, X.backoffSince = true, now
-	end
-	local wantBack = X.backing == true
-
 	if feintOn then
 		mode, faceTarget = "Feinting", true
 		moveDir = feintDir
-	elseif wantBack then
-		mode, faceTarget = "Backing off", true
-		moveDir = -fwd * 0.9 + right * strafeSign * 0.2 -- away from them, a little sideways so we're not a straight line
-		local away = X.awayFrom(hrp.Position) -- and away from anyone else close by
-		if away then moveDir += away * 0.9 end
-		if moveDir.Magnitude > 1 then moveDir = moveDir.Unit end
 	elseif retreating then
 		mode, faceTarget = "Retreating", true
 		if d < 28 then
