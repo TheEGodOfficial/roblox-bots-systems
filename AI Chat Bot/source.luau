@@ -520,102 +520,51 @@ end
 
 local function startAutoJump()
 	if autoJumpConn then autoJumpConn:Disconnect() end
-	local jumpCooldown = 0
-	local edgeCooldown = 0
+	local cooldown = 0
 	local ws = game:GetService("Workspace")
 	local rayParams = RaycastParams.new()
 	rayParams.FilterType = Enum.RaycastFilterType.Exclude
 
 	autoJumpConn = rs.Heartbeat:Connect(function(dt)
 		if not hum or not hum.Parent or not hrp or not hrp.Parent then
-			autoJumpConn:Disconnect()
-			autoJumpConn = nil
-			return
+			autoJumpConn:Disconnect(); autoJumpConn = nil; return
 		end
+		cooldown = math.max(0, cooldown - dt)
+		if cooldown > 0 then return end
+		if hum.MoveDirection.Magnitude < 0.1 then return end
 
-		jumpCooldown = math.max(0, jumpCooldown - dt)
-		edgeCooldown = math.max(0, edgeCooldown - dt)
 		rayParams.FilterDescendantsInstances = { b }
-
-		local cf = hrp.CFrame
-		local forward = cf.LookVector
-		local right = cf.RightVector
 		local pos = hrp.Position
-		local speed = hum.MoveDirection.Magnitude
+		local fwd = hrp.CFrame.LookVector
+		local rgt = hrp.CFrame.RightVector
 
-		-- obstacle wall detection
-		if speed > 0.1 and jumpCooldown <= 0 then
-			local hit = false
-			local yOffsets = { -2.5, -1.5, -0.5, 0.5, 1.2 }
-			local xOffsets = { -1.2, -0.6, 0, 0.6, 1.2 }
-
-			for _, xOff in ipairs(xOffsets) do
-				if hit then break end
-				for _, yOff in ipairs(yOffsets) do
-					local origin = pos + right * xOff + Vector3.new(0, yOff, 0)
-					if ws:Raycast(origin, forward * 3.5, rayParams) then
-						hit = true
-						break
-					end
-				end
-			end
-
-			-- step/ledge detection ahead
-			if not hit then
-				local probeOrigin = pos + forward * 3 + Vector3.new(0, 10, 0)
-				local downRes = ws:Raycast(probeOrigin, Vector3.new(0, -15, 0), rayParams)
-				local groundOrigin = pos + Vector3.new(0, 10, 0)
-				local groundRes = ws:Raycast(groundOrigin, Vector3.new(0, -15, 0), rayParams)
-				if downRes and groundRes and (downRes.Position.Y - groundRes.Position.Y > 0.8) then
-					hit = true
-				end
-			end
-
-			if hit then
-				hum.Jump = true
-				jumpCooldown = 0.45
-			end
-		end
-
-		-- parkour: gap detection (jump over gaps)
-		if speed > 0.1 and jumpCooldown <= 0 then
-			local frontProbe = pos + forward * 2.5 + Vector3.new(0, 5, 0)
-			local frontGround = ws:Raycast(frontProbe, Vector3.new(0, -10, 0), rayParams)
-			local myGround = ws:Raycast(pos + Vector3.new(0, 5, 0), Vector3.new(0, -10, 0), rayParams)
-
-			if myGround and not frontGround then
-				-- gap ahead, jump
-				hum.Jump = true
-				jumpCooldown = 0.6
-			end
-		end
-
-		-- edge jump: if about to walk off a ledge, jump forward instead of falling
-		if speed > 0.1 and edgeCooldown <= 0 then
-			local edgeProbe = pos + forward * 1.8 + Vector3.new(0, 2, 0)
-			local edgeRes = ws:Raycast(edgeProbe, Vector3.new(0, -8, 0), rayParams)
-			local groundCheck = ws:Raycast(pos + Vector3.new(0, 2, 0), Vector3.new(0, -6, 0), rayParams)
-
-			if groundCheck and not edgeRes then
-				hum.Jump = true
-				edgeCooldown = 0.8
-				jumpCooldown = 0.4
-			end
-		end
-
-		-- wall run attempt: if stuck against a wall and airborne, jump again
-		if jumpCooldown <= 0 then
-			local myGround2 = ws:Raycast(pos + Vector3.new(0, 2, 0), Vector3.new(0, -5, 0), rayParams)
-			if not myGround2 then
-				-- airborne, check for wall to push off of
-				local wallHit = ws:Raycast(pos, forward * 2.5, rayParams)
-					or ws:Raycast(pos, right * 2.5, rayParams)
-					or ws:Raycast(pos, -right * 2.5, rayParams)
-				if wallHit then
+		-- wall check at three heights, three lateral offsets
+		for _, xOff in ipairs({ -0.9, 0, 0.9 }) do
+			for _, yOff in ipairs({ -2, 0, 1.5 }) do
+				local origin = pos + rgt * xOff + Vector3.new(0, yOff, 0)
+				if ws:Raycast(origin, fwd * 3.2, rayParams) then
 					hum.Jump = true
-					jumpCooldown = 0.5
+					cooldown = 0.55
+					return
 				end
 			end
+		end
+
+		-- step/ledge ahead
+		local ahead    = pos + fwd * 3 + Vector3.new(0, 10, 0)
+		local ground   = pos + Vector3.new(0, 10, 0)
+		local hitAhead = ws:Raycast(ahead,  Vector3.new(0, -15, 0), rayParams)
+		local hitGnd   = ws:Raycast(ground, Vector3.new(0, -15, 0), rayParams)
+		if hitAhead and hitGnd and (hitAhead.Position.Y - hitGnd.Position.Y > 0.9) then
+			hum.Jump = true; cooldown = 0.55; return
+		end
+
+		-- gap ahead
+		local frontProbe = pos + fwd * 2.5 + Vector3.new(0, 5, 0)
+		local frontGnd   = ws:Raycast(frontProbe, Vector3.new(0, -10, 0), rayParams)
+		local myGnd      = ws:Raycast(pos + Vector3.new(0, 5, 0), Vector3.new(0, -10, 0), rayParams)
+		if myGnd and not frontGnd then
+			hum.Jump = true; cooldown = 0.65; return
 		end
 	end)
 end
@@ -636,7 +585,7 @@ local function fp(pth, goal)
 
 	local ws = game:GetService("Workspace")
 	local recalcCooldown = 0
-	local lastRecalcPos = hrp and hrp.Position or Vector3.new()
+	local lastRecalcPos  = hrp and hrp.Position or Vector3.new()
 
 	for i, wp in ipairs(wps) do
 		if not hum or not hum.Parent or hum.Health <= 0 then stopAutoJump(); return false end
@@ -644,100 +593,87 @@ local function fp(pth, goal)
 
 		hum:MoveTo(wp.Position)
 
+		-- give MoveTo a frame to settle, then hold Jump=true across three frames
 		if wp.Action == Enum.PathWaypointAction.Jump then
+			task.wait(0.05)
 			hum.Jump = true
-			task.delay(0.1, function() if hum then hum.Jump = true end end)
-			task.delay(0.25, function() if hum then hum.Jump = true end end)
+			task.wait(0.1)
+			hum.Jump = true
+			task.wait(0.1)
+			hum.Jump = true
 		end
 
-		local timeout = math.max(2.5, (wp.Position - hrp.Position).Magnitude / math.max(hum.WalkSpeed, 1) * 2.8)
+		local spd     = math.max(hum.WalkSpeed, 4)
+		local dist    = (wp.Position - hrp.Position).Magnitude
+		local timeout = math.max(3, dist / spd * 3)
 		local elapsed = 0
-		local stuckT = 0
+		local stuckT  = 0
 		local lastPos = hrp.Position
 		local reached = false
 
-		while elapsed < timeout do
+		repeat
 			if not hum or not hum.Parent or hum.Health <= 0 then stopAutoJump(); return false end
 			if not hrp or not hrp.Parent then stopAutoJump(); return false end
 
 			local dt2 = task.wait(0.1)
-			elapsed += dt2
-			recalcCooldown = math.max(0, recalcCooldown - dt2)
+			elapsed        += dt2
+			recalcCooldown  = math.max(0, recalcCooldown - dt2)
 
 			local cur = hrp.Position
 
 			if (cur - wp.Position).Magnitude < 3.5 then
-				reached = true
-				break
+				reached = true; break
 			end
 
 			local moved = (cur - lastPos).Magnitude
 			lastPos = cur
 
-			-- stuck detection
 			if hum.MoveDirection.Magnitude > 0.1 and moved < 0.08 then
 				stuckT += dt2
-
-				if stuckT > 0.8 then
-					-- try jumping out of stuck
+				if stuckT > 0.7 then
 					hum.Jump = true
-					task.wait(0.15)
+					task.wait(0.1)
+					hum.Jump = true
 					hum:MoveTo(wp.Position)
 				end
-
 				if stuckT > 2 and recalcCooldown <= 0 and goal then
-					-- recalculate path from current position
 					recalcCooldown = 3
-					local newPth, ok = cwp(cur, goal)
-					if ok then
-						stopAutoJump()
-						return fp(newPth, goal)
-					else
-						-- goal unreachable, try a midpoint
-						local mid = cur + (goal - cur) * 0.5
-						mid = mid + Vector3.new(math.random(-5, 5), 0, math.random(-5, 5))
-						local midPth, midOk = cwp(cur, mid)
-						if midOk then
-							stopAutoJump()
-							return fp(midPth, goal)
-						end
-					end
-					stopAutoJump()
-					return false
+					local np, ok = cwp(cur, goal)
+					if ok then stopAutoJump(); return fp(np, goal) end
+					local mid = cur + (goal - cur) * 0.5
+					mid = mid + Vector3.new(math.random(-5, 5), 0, math.random(-5, 5))
+					local mp, mok = cwp(cur, mid)
+					if mok then stopAutoJump(); return fp(mp, goal) end
+					stopAutoJump(); return false
 				end
 			else
 				stuckT = 0
 			end
 
-			-- dynamic obstacle check: if something suddenly blocks path, recalc
+			-- dynamic obstacle recalc
 			if recalcCooldown <= 0 and goal and (cur - lastRecalcPos).Magnitude > 12 then
 				lastRecalcPos = cur
-				local rayParams2 = RaycastParams.new()
-				rayParams2.FilterType = Enum.RaycastFilterType.Exclude
-				rayParams2.FilterDescendantsInstances = { b }
-				local dir = (wp.Position - cur)
+				local rp2 = RaycastParams.new()
+				rp2.FilterType = Enum.RaycastFilterType.Exclude
+				rp2.FilterDescendantsInstances = { b }
+				local dir = wp.Position - cur
 				if dir.Magnitude > 1 then
-					local blocked = ws:Raycast(cur + Vector3.new(0, 1, 0), dir.Unit * math.min(dir.Magnitude, 6), rayParams2)
+					local blocked = ws:Raycast(cur + Vector3.new(0, 1, 0), dir.Unit * math.min(dir.Magnitude, 6), rp2)
 					if blocked then
 						recalcCooldown = 2
-						local newPth, ok = cwp(cur, goal)
-						if ok then
-							stopAutoJump()
-							return fp(newPth, goal)
-						end
+						local np, ok = cwp(cur, goal)
+						if ok then stopAutoJump(); return fp(np, goal) end
 					end
 				end
 			end
-		end
+		until elapsed >= timeout
 
 		if not reached and i == #wps then
-			stopAutoJump()
-			return false
+			stopAutoJump(); return false
 		end
 	end
 
-	stopAutoJump()
-	return true
+	stopAutoJump(); return true
 end
 
 if wnd and hum and hrp then
@@ -774,7 +710,6 @@ if wnd and hum and hrp then
 					end
 				end
 
-				-- progressively try closer goals on failure
 				if at <= MPA then
 					local t2 = at / MPA
 					local closer = origin + (gl - origin) * (1 - t2 * 0.4)
