@@ -184,7 +184,7 @@ local function lk()
 	return nil
 end
 local nfActive = false
-setsimulationrius(2 ^ 24)
+setsimulationradius(2 ^ 24)
 rs.RenderStepped:Connect(function()
 	if nfActive then return end
 	local c = lp.Character
