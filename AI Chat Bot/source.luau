@@ -21,6 +21,19 @@ local h = game:GetService("HttpService")
 local pfs = game:GetService("PathfindingService")
 local mps = game:GetService("MarketplaceService")
 local rs = game:GetService("RunService")
+
+local Admins = {
+	p:GetUserIdFromNameAsync("RobloxIsNotCoolV3"),
+	p:GetUserIdFromNameAsync("N_oobGamer"),
+	p:GetUserIdFromNameAsync("mftmikey"),
+	p:GetUserIdFromNameAsync("IIIIlllIIllllIIIll"),
+}
+
+local IgnoreListHardcoded = {
+	"SwordFighterClanker",
+	"SwordFightingClanker",
+}
+
 local lp = p.LocalPlayer
 
 local k = env.APIKey
@@ -31,6 +44,160 @@ local r = env.ChatRadius
 local wnd = env.Wandering
 local wd = env.WanderDistance
 local ww = env.WanderWait
+
+local IgnoreList = {}
+local IgnoreListHardcodedKeys = {}
+
+local SAVE_FOLDER = "AIBot"
+local IGNORE_FILE  = SAVE_FOLDER .. "/ignorelist.json"
+
+local function ensureFolder()
+	if not isfolder(SAVE_FOLDER) then
+		makefolder(SAVE_FOLDER)
+	end
+end
+
+local function saveIgnoreList()
+	ensureFolder()
+	local toSave = {}
+	for key, val in pairs(IgnoreList) do
+		if not IgnoreListHardcodedKeys[key] then
+			toSave[key] = val
+		end
+	end
+	writefile(IGNORE_FILE, h:JSONEncode(toSave))
+end
+
+local function loadIgnoreList()
+	ensureFolder()
+	if isfile(IGNORE_FILE) then
+		local ok, decoded = pcall(function()
+			return h:JSONDecode(readfile(IGNORE_FILE))
+		end)
+		if ok and type(decoded) == "table" then
+			for key, val in pairs(decoded) do
+				IgnoreList[key] = val
+			end
+		end
+	end
+	for _, entry in ipairs(IgnoreListHardcoded) do
+		local key
+		if type(entry) == "number" then
+			key = tostring(math.floor(entry))
+		elseif type(entry) == "string" then
+			key = entry:lower()
+		end
+		if key and key ~= "" then
+			IgnoreList[key] = true
+			IgnoreListHardcodedKeys[key] = true
+		end
+	end
+end
+
+local function resolveTarget(raw)
+	if not raw or raw == "" then
+		return nil, nil, false
+	end
+	local trimmed = raw:gsub("^%s+", ""):gsub("%s+$", "")
+	if trimmed == "" then
+		return nil, nil, false
+	end
+
+	if tonumber(trimmed) then
+		local uid2 = tostring(math.floor(tonumber(trimmed)))
+		return uid2, "userid:" .. uid2, true
+	end
+
+	local lower = trimmed:lower()
+
+	local exactName, exactDisplay, partialName, partialDisplay
+
+	for _, pl in ipairs(p:GetPlayers()) do
+		local pname = (pl.Name or ""):lower()
+		local dname = (pl.DisplayName or ""):lower()
+
+		if pname == lower then
+			exactName = pl
+			break
+		end
+		if dname == lower then
+			exactDisplay = pl
+		end
+		if not partialName and pname:find(lower, 1, true) then
+			partialName = pl
+		end
+		if not partialDisplay and dname:find(lower, 1, true) then
+			partialDisplay = pl
+		end
+	end
+
+	local matched = exactName or exactDisplay or partialName or partialDisplay
+
+	if matched then
+		local uid2 = tostring(matched.UserId)
+		local label = matched.Name .. " (" .. matched.DisplayName .. ") [" .. uid2 .. "]"
+		return uid2, label, true
+	end
+
+	return lower, trimmed .. " (stored as username, player not in game)", true
+end
+
+local function isIgnored(plr)
+	if not plr then return false end
+	local idKey = tostring(plr.UserId)
+	local nameKey = (plr.Name or ""):lower()
+	local dispKey = (plr.DisplayName or ""):lower()
+	return IgnoreList[idKey] == true
+		or IgnoreList[nameKey] == true
+		or IgnoreList[dispKey] == true
+end
+
+local function addIgnore(raw)
+	local key, label, ok = resolveTarget(raw)
+	if not ok then
+		return false, "Could not resolve target: " .. tostring(raw)
+	end
+	if IgnoreList[key] then
+		return false, label .. " is already ignored."
+	end
+	IgnoreList[key] = true
+	saveIgnoreList()
+	return true, "Ignored: " .. label
+end
+
+local function removeIgnore(raw)
+	local key, label, ok = resolveTarget(raw)
+	if not ok then
+		return false, "Could not resolve target: " .. tostring(raw)
+	end
+	if IgnoreListHardcodedKeys[key] then
+		return false, label .. " is hardcoded and cannot be removed via command."
+	end
+	if not IgnoreList[key] then
+		return false, label .. " is not in the ignore list."
+	end
+	IgnoreList[key] = nil
+	saveIgnoreList()
+	return true, "Unignored: " .. label
+end
+
+local function isAdmin(plr)
+	if not plr then return false end
+	for _, id in ipairs(Admins) do
+		if plr.UserId == id then return true end
+	end
+	return false
+end
+
+local function uidToName(uid2)
+	local str = tostring(uid2)
+	if kn[str] then return kn[str] end
+	local pl = p:GetPlayerByUserId(uid2)
+	if pl then return pl.Name end
+	return "userid:" .. str
+end
+
+loadIgnoreList()
 
 local bs = false
 local pid = game.PlaceId
@@ -93,10 +260,20 @@ local function emf(msg)
 	if not msg then return nil end
 	local lo = string.lower(msg)
 	local ptns = {
-		"remember that ", "remember ", "note that ",
-		"my favorite ", "i like ", "i love ", "my name is ",
-		"i am ", "i play ", "i enjoy ", "i hate ",
-		"i want ", "i live in ", "i have a favorite "
+		"remember that ",
+		"remember ",
+		"note that ",
+		"my favorite ",
+		"i like ",
+		"i love ",
+		"my name is ",
+		"i am ",
+		"i play ",
+		"i enjoy ",
+		"i hate ",
+		"i want ",
+		"i live in ",
+		"i have a favorite ",
 	}
 	for _, ptn in ipairs(ptns) do
 		local idx = string.find(lo, ptn, 1, true)
@@ -121,9 +298,9 @@ local function ash(plr, tx)
 	if cln == "" then return end
 	table.insert(sch, {
 		playerName = plr and (plr.DisplayName or plr.Name or "Unknown") or "Unknown",
-		username = plr and (plr.Name or "Unknown") or "Unknown",
-		userId = plr and (plr.UserId or 0) or 0,
-		text = cln
+		username   = plr and (plr.Name or "Unknown") or "Unknown",
+		userId     = plr and (plr.UserId or 0) or 0,
+		text       = cln,
 	})
 	while #sch > MSH do table.remove(sch, 1) end
 end
@@ -288,8 +465,14 @@ local function aq(txt, spk)
 		local bd = {
 			model = model,
 			messages = {
-				{ role = "system", content = pr },
-				{ role = "user", content = pt },
+				{
+					role = "system",
+					content = pr,
+				},
+				{
+					role = "user",
+					content = pt,
+				},
 			},
 			max_tokens = mt,
 			temperature = 0.7,
@@ -306,7 +489,7 @@ local function aq(txt, spk)
 	end
 
 	local hdrs = {
-		["Content-Type"] = "application/json",
+		["Content-Type"]  = "application/json",
 		["Authorization"] = "Bearer " .. tostring(k),
 		["x-goog-api-key"] = tostring(k),
 	}
@@ -473,11 +656,14 @@ end
 
 local function cwp(fr, gl)
 	local pth = pfs:CreatePath({
-		AgentRadius = 2,
-		AgentHeight = 5,
+		AgentRadius  = 2,
+		AgentHeight  = 5,
 		AgentCanJump = true,
 		AgentMaxSlope = 75,
-		Costs = { Water = 20, Climb = 5 },
+		Costs = {
+			Water = 20,
+			Climb = 5,
+		},
 	})
 	local ok = pcall(function() pth:ComputeAsync(fr, gl) end)
 	if ok and pth.Status == Enum.PathStatus.Success then return pth, true end
@@ -538,8 +724,16 @@ local function saj()
 		local fw = hrp.CFrame.LookVector
 		local rg = hrp.CFrame.RightVector
 
-		for _, xo in ipairs({ -0.9, 0, 0.9 }) do
-			for _, yo in ipairs({ -2, 0, 1.5 }) do
+		for _, xo in ipairs({
+			-0.9,
+			0,
+			0.9,
+		}) do
+			for _, yo in ipairs({
+				-2,
+				0,
+				1.5,
+			}) do
 				local og = ps + rg * xo + Vector3.new(0, yo, 0)
 				if ws:Raycast(og, fw * 3.2, rp) then
 					hum.Jump = true
@@ -739,16 +933,161 @@ if wnd and hum and hrp then
 	end)
 end
 
+local CommandList = {
+	"/aiignore <name/displayname/userid> - Ignores a player. Supports partial names for in-game players.",
+	"/aiunignore <name/displayname/userid> - Removes a player from the ignore list.",
+	"/aiadmins - Lists all bot admins with their usernames.",
+	"/aiignored - Lists all ignored players, hardcoded ones shown separately.",
+	"/aicmds - Shows this command list (admins only, one line at a time).",
+}
+
 t.MessageReceived:Connect(function(msg)
 	if not msg.TextSource then return end
 	local spk = p:GetPlayerByUserId(msg.TextSource.UserId)
 	if not spk then return end
 	kn[tostring(spk.UserId)] = spk.Name
+
 	local txt = msg.Text
+	local lo = txt:lower()
+
+	if isAdmin(spk) then
+		-- /aiignore <target>
+		if lo:match("^/aiignore%s+") then
+			local raw = txt:match("^/[Aa][Ii][Ii][Gg][Nn][Oo][Rr][Ee]%s+(.+)")
+			if raw then
+				raw = raw:gsub("^%s+", ""):gsub("%s+$", "")
+				local ok, feedback = addIgnore(raw)
+				ch(feedback)
+			end
+			return
+		end
+
+		if lo:match("^/aiunignore%s+") then
+			local raw = txt:match("^/[Aa][Ii][Uu][Nn][Ii][Gg][Nn][Oo][Rr][Ee]%s+(.+)")
+			if raw then
+				raw = raw:gsub("^%s+", ""):gsub("%s+$", "")
+				local ok, feedback = removeIgnore(raw)
+				ch(feedback)
+			end
+			return
+		end
+
+		if lo == "/aiadmins" then
+			task.spawn(function()
+				if #Admins == 0 then
+					ch("No admins configured.")
+					return
+				end
+				ch("--- Bot Admins ---")
+				task.wait(3)
+				for i, id in ipairs(Admins) do
+					local name = uidToName(id)
+					ch(tostring(i) .. ". " .. name .. " [" .. tostring(id) .. "]")
+					if i < #Admins then task.wait(3) end
+				end
+			end)
+			return
+		end
+
+		if lo == "/aiignored" then
+			task.spawn(function()
+				local runtime = {}
+				local hardcoded = {}
+
+				for key, _ in pairs(IgnoreList) do
+					if IgnoreListHardcodedKeys[key] then
+						table.insert(hardcoded, key)
+					else
+						table.insert(runtime, key)
+					end
+				end
+
+				table.sort(runtime)
+				table.sort(hardcoded)
+
+				if #runtime == 0 and #hardcoded == 0 then
+					ch("Ignore list is empty.")
+					return
+				end
+
+				if #runtime > 0 then
+					ch("--- Ignored (runtime) ---")
+					task.wait(3)
+					for i, key in ipairs(runtime) do
+						-- Try to resolve key to a readable label
+						local label
+						if tonumber(key) then
+							local uid2 = tonumber(key)
+							local name = uidToName(uid2)
+							label = tostring(i) .. ". " .. name .. " [" .. key .. "]"
+						else
+							-- Username key: check if they're in-game
+							local inGame = false
+							for _, pl in ipairs(p:GetPlayers()) do
+								if (pl.Name or ""):lower() == key then
+									label = tostring(i) .. ". " .. pl.Name .. " (" .. pl.DisplayName .. ") [" .. pl.UserId .. "]"
+									inGame = true
+									break
+								end
+							end
+							if not inGame then
+								label = tostring(i) .. ". " .. key .. " (not in game)"
+							end
+						end
+						ch(label)
+						if i < #runtime then task.wait(3) end
+					end
+				end
+
+				if #hardcoded > 0 then
+					task.wait(3)
+					ch("--- Ignored (hardcoded) ---")
+					task.wait(3)
+					for i, key in ipairs(hardcoded) do
+						local label
+						if tonumber(key) then
+							local uid2 = tonumber(key)
+							local name = uidToName(uid2)
+							label = tostring(i) .. ". " .. name .. " [" .. key .. "] (hardcoded)"
+						else
+							local inGame = false
+							for _, pl in ipairs(p:GetPlayers()) do
+								if (pl.Name or ""):lower() == key then
+									label = tostring(i) .. ". " .. pl.Name .. " (" .. pl.DisplayName .. ") [" .. pl.UserId .. "] (hardcoded)"
+									inGame = true
+									break
+								end
+							end
+							if not inGame then
+								label = tostring(i) .. ". " .. key .. " (not in game, hardcoded)"
+							end
+						end
+						ch(label)
+						if i < #hardcoded then task.wait(3) end
+					end
+				end
+			end)
+			return
+		end
+
+		if lo == "/aicmds" then
+			task.spawn(function()
+				for i, line in ipairs(CommandList) do
+					ch(line)
+					if i < #CommandList then task.wait(3) end
+				end
+			end)
+			return
+		end
+	end
+
+	if isIgnored(spk) then return end
+
 	local has = string.sub(txt, 1, #c) == c
 	local inr = nr(spk)
 	local dor = false
 	local q = txt
+
 	if inr then
 		dor = true
 		if has then q = string.sub(txt, #c + 1):gsub("^%s+", "") end
@@ -756,6 +1095,7 @@ t.MessageReceived:Connect(function(msg)
 		dor = true
 		q = string.sub(txt, #c + 1):gsub("^%s+", "")
 	end
+
 	if dor and q ~= "" and spk ~= lp and not bs then
 		local mf = emf(q)
 		if mf then apm(spk, mf) end
