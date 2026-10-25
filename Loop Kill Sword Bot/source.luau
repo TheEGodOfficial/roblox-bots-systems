@@ -197,8 +197,8 @@ rs.RenderStepped:Connect(function()
 	else
 		h.PlatformStand = true
 		r.CFrame = pc
-		r.AssemblyLinearVelocity = Vector3.zero
-		r.AssemblyAngularVelocity = Vector3.zero
+		sethiddenproperty(hrp, "AssemblyLinearVelocity",  Vector3.zero)
+		sethiddenproperty(hrp, "AssemblyAngularVelocity", Vector3.zero)
 		pcall(sethiddenproperty, r, "PhysicsRepRootRef", InstanceHandle.new(nil))
 	end
 	if cm and cm.CameraSubject ~= r then cm.CameraSubject = r end
@@ -219,7 +219,6 @@ local function nf(targetHrp)
 			task.wait()
 		end
 	end
-	hrp.CFrame = CFrame.new(nan, nan, nan)
 	sethiddenproperty(hrp, "AssemblyLinearVelocity",  Vector3.new(nan, nan, nan))
 	sethiddenproperty(hrp, "AssemblyAngularVelocity", Vector3.new(nan, nan, nan))
 end
