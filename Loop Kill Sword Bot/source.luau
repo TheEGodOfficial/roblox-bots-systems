@@ -193,13 +193,13 @@ rs.RenderStepped:Connect(function()
 	if k then
 		h.PlatformStand = false
 		r.CFrame = CFrame.lookAt((k.CFrame * of).Position, k.Position)
-		pcall(sethiddenproperty, r, "PhysicsRepRootRef", InstanceHandle.new(k))
+		sethiddenproperty(r, "PhysicsRepRootRef", InstanceHandle.new(k))
 	else
 		h.PlatformStand = true
 		r.CFrame = pc
 		r.AssemblyLinearVelocity  = Vector3.zero
 		r.AssemblyAngularVelocity = Vector3.zero
-		pcall(sethiddenproperty, r, "PhysicsRepRootRef", InstanceHandle.new(nil))
+		sethiddenproperty(r, "PhysicsRepRootRef", InstanceHandle.new(nil))
 	end
 	if cm and cm.CameraSubject ~= r then cm.CameraSubject = r end
 end)
