@@ -183,8 +183,10 @@ local function lk()
 	end
 	return nil
 end
+local nfActive = false
 setsimulationradius(2 ^ 24)
 rs.RenderStepped:Connect(function()
+	if nfActive then return end
 	local c = lp.Character
 	local r = c and c:FindFirstChild("HumanoidRootPart")
 	local h = c and c:FindFirstChildOfClass("Humanoid")
@@ -197,8 +199,8 @@ rs.RenderStepped:Connect(function()
 	else
 		h.PlatformStand = true
 		r.CFrame = pc
-		sethiddenproperty(hrp, "AssemblyLinearVelocity",  Vector3.zero)
-		sethiddenproperty(hrp, "AssemblyAngularVelocity", Vector3.zero)
+		r.AssemblyLinearVelocity = Vector3.zero
+		r.AssemblyAngularVelocity = Vector3.zero
 		pcall(sethiddenproperty, r, "PhysicsRepRootRef", InstanceHandle.new(nil))
 	end
 	if cm and cm.CameraSubject ~= r then cm.CameraSubject = r end
@@ -208,19 +210,20 @@ local function nf(targetHrp)
 	local hrp = c and c:FindFirstChild("HumanoidRootPart")
 	if not hrp then return end
 	local nan = 0 / 0
-	if targetHrp and targetHrp.Parent then
-		local angle = 0
-		local spinSteps = 30
-		for i = 0, spinSteps do
-			angle = (math.pi * 2 / spinSteps) * i
-			hrp.CFrame = targetHrp.CFrame * CFrame.Angles(0, angle, 0)
-			sethiddenproperty(hrp, "AssemblyLinearVelocity",  Vector3.new(nan, nan, nan))
-			sethiddenproperty(hrp, "AssemblyAngularVelocity", Vector3.new(nan, nan, nan))
-			task.wait()
+	local h = c and c:FindFirstChildOfClass("Humanoid")
+	nfActive = true
+	for i = 1, 60 do
+		if h and h.Parent then h.PlatformStand = false end
+		if targetHrp and targetHrp.Parent then
+			hrp.CFrame = targetHrp.CFrame
 		end
+		hrp.AssemblyLinearVelocity = Vector3.new(nan, nan, nan)
+		hrp.AssemblyAngularVelocity = Vector3.new(nan, nan, nan)
+		sethiddenproperty(hrp, "Velocity", Vector3.new(nan, nan, nan))
+		sethiddenproperty(hrp, "RotVelocity", Vector3.new(nan, nan, nan))
+		task.wait()
 	end
-	sethiddenproperty(hrp, "AssemblyLinearVelocity",  Vector3.new(nan, nan, nan))
-	sethiddenproperty(hrp, "AssemblyAngularVelocity", Vector3.new(nan, nan, nan))
+	nfActive = false
 end
 local function gb(tool)
 	return tool:FindFirstChild("Blade")
@@ -369,10 +372,10 @@ tcs.MessageReceived:Connect(function(msg)
 	local se = txt:match("^/saveloop%s+(.+)")
 	local sg = txt:match("^/saveunloop%s+(.+)")
 	if sa then csm(spk, sa:gsub("^%s+", ""):gsub("%s+$", "")) end
-	if sb then clp(sb:gsub("^%s+", ""):gsub("%s+$", ""))      end
-	if sc then cul(sc:gsub("^%s+", ""):gsub("%s+$", ""))      end
-	if se then csl(se:gsub("^%s+", ""):gsub("%s+$", ""))      end
-	if sg then csu(sg:gsub("^%s+", ""):gsub("%s+$", ""))      end
+	if sb then clp(sb:gsub("^%s+", ""):gsub("%s+$", "")) end
+	if sc then cul(sc:gsub("^%s+", ""):gsub("%s+$", "")) end
+	if se then csl(se:gsub("^%s+", ""):gsub("%s+$", "")) end
+	if sg then csu(sg:gsub("^%s+", ""):gsub("%s+$", "")) end
 	if lo2:match("^/cmds") then
 		task.spawn(scm)
 	elseif lo2:match("^/permloops") then
@@ -397,10 +400,10 @@ local function hk(p)
 		local se = m:match("^/saveloop%s+(.+)")
 		local sg = m:match("^/saveunloop%s+(.+)")
 		if sa then csm(p, sa:gsub("^%s+", ""):gsub("%s+$", "")) end
-		if sb then clp(sb:gsub("^%s+", ""):gsub("%s+$", ""))    end
-		if sc then cul(sc:gsub("^%s+", ""):gsub("%s+$", ""))    end
-		if se then csl(se:gsub("^%s+", ""):gsub("%s+$", ""))    end
-		if sg then csu(sg:gsub("^%s+", ""):gsub("%s+$", ""))    end
+		if sb then clp(sb:gsub("^%s+", ""):gsub("%s+$", "")) end
+		if sc then cul(sc:gsub("^%s+", ""):gsub("%s+$", "")) end
+		if se then csl(se:gsub("^%s+", ""):gsub("%s+$", "")) end
+		if sg then csu(sg:gsub("^%s+", ""):gsub("%s+$", "")) end
 		if lo2:match("^/cmds") then
 			task.spawn(scm)
 		elseif lo2:match("^/permloops") then
