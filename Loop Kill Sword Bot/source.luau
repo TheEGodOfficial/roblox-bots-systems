@@ -6,11 +6,22 @@ Copyright (c) 2026 E God/Fred
 
 local ps = game:GetService("Players")
 local tcs = game:GetService("TextChatService")
-local http = game:GetService("HttpService")
-local rsv = game:GetService("RunService")
+local hs = game:GetService("HttpService")
+local rs = game:GetService("RunService")
+
 local lp = ps.LocalPlayer
 
-local adms = {
+local pc = CFrame.new(10000, 10000, 10000)
+local of = CFrame.new(0, 0, 2.5)
+local cc = 3
+local swd = 0.2
+local sl = 60
+local ct = 8
+local md = 3
+local dd = "BotLoopData"
+local df = "BotLoopData/Data.json"
+
+local ad = {
 	4603013888,
 	545411642,
 	2479604659,
@@ -45,83 +56,112 @@ local adms = {
 }
 
 local sk = {
-	"sword","blade","katana","saber","sabre","scimitar","cutlass","rapier",
-	"claymore","broadsword","longsword","shortsword","greatsword","zweihander",
-	"falchion","gladius","dagger","knife","machete","axe","battleaxe","hatchet",
+	"sword",
+	"blade",
+	"katana",
+	"saber",
+	"sabre",
+	"scimitar",
+	"cutlass",
+	"rapier",
+	"claymore",
+	"broadsword",
+	"longsword",
+	"shortsword",
+	"greatsword",
+	"zweihander",
+	"falchion",
+	"gladius",
+	"dagger",
+	"knife",
+	"machete",
+	"axe",
+	"battleaxe",
+	"hatchet",
 }
 
-local cd, ad, to, msgcd = 3, 0.2, 60, 3
-local is, db = false, false
-local data, lpd = {}, {}
+local tl = {}
+local pl = {}
+local bz = {}
+local cl = false
 
-local function srd()
-	local s, r = pcall(function()
-		if not readfile then return {} end
-		return http:JSONDecode(readfile("BotLoopData/Data.json"))
-	end)
-	return (s and type(r) == "table") and r or {}
-end
-
-local function swd(t)
-	if writefile then
-		writefile("BotLoopData/Data.json", http:JSONEncode(t))
+local function sd(m)
+	local tc = tcs:FindFirstChild("TextChannels")
+	local rc = tc and tc:FindFirstChild("RBXGeneral")
+	if rc then
+		pcall(function()
+			rc:SendAsync(m)
+		end)
 	end
 end
 
-if isfile and isfolder and makefolder and writefile and readfile then
-	if not isfolder("BotLoopData") then makefolder("BotLoopData") end
-	if not isfile("BotLoopData/Data.json") then
-		data = {}
-		writefile("BotLoopData/Data.json", http:JSONEncode(data))
+local io = isfile and isfolder and makefolder and writefile and readfile
+
+local function rp()
+	local ok, r = pcall(function()
+		return hs:JSONDecode(readfile(df))
+	end)
+	if ok and type(r) == "table" then
+		local o = {}
+		for _, v in ipairs(r) do
+			if type(v) == "string" then
+				o[#o + 1] = v
+			end
+		end
+		return o
+	end
+	return {}
+end
+
+local function wp()
+	if not io then return end
+	pcall(writefile, df, hs:JSONEncode(pl))
+end
+
+if io then
+	if not isfolder(dd) then makefolder(dd) end
+	if isfile(df) then
+		pl = rp()
 	else
-		data = srd()
+		pcall(writefile, df, "[]")
 	end
 else
-	if tcs:FindFirstChild("TextChannels") then
-		local c = tcs.TextChannels:FindFirstChild("RBXGeneral")
-		if c then
-			c:SendAsync("Exe doesnt support file system functions")
-		end
-	end
+	sd("Exe doesnt support file system functions")
 end
 
-local function gp(arg)
-	if not arg or arg == "" then return nil end
-	arg = tostring(arg):lower()
-
-	local uid = tonumber(arg)
-	if uid then
+local function fp(a)
+	if not a or a == "" then return nil end
+	a = tostring(a):lower()
+	local u = tonumber(a)
+	if u then
 		for _, p in ipairs(ps:GetPlayers()) do
-			if p.UserId == uid then return p end
+			if p.UserId == u then return p end
 		end
 	end
-
+	local pt
 	for _, p in ipairs(ps:GetPlayers()) do
-		if p.Name:lower() == arg or p.DisplayName:lower() == arg then
-			return p
+		local n = p.Name:lower()
+		local d = p.DisplayName:lower()
+		if n == a or d == a then return p end
+		if not pt and (string.find(n, a, 1, true) or string.find(d, a, 1, true)) then
+			pt = p
 		end
 	end
-
-	local m = {}
-	for _, p in ipairs(ps:GetPlayers()) do
-		if string.find(p.Name:lower(), arg, 1, true) or string.find(p.DisplayName:lower(), arg, 1, true) then
-			table.insert(m, p)
-		end
-	end
-	return m[1]
+	return pt
 end
 
 local function fs()
-	local ft, sn = {}, {}
+	local f = {}
+	local s = {}
 	local function sc(c)
 		if not c then return end
 		for _, i in ipairs(c:GetChildren()) do
-			if i:IsA("Tool") and not sn[i] then
-				local nl = string.lower(i.Name)
+			if i:IsA("Tool") and not s[i] then
+				local n = i.Name:lower()
 				for _, k in ipairs(sk) do
-					if string.find(nl, k, 1, true) then
-						sn[i] = true
-						table.insert(ft, i)
+					if string.find(n, k, 1, true) then
+						s[i] = true
+						f[#f + 1] = i
 						break
 					end
 				end
@@ -130,292 +170,270 @@ local function fs()
 	end
 	sc(lp:FindFirstChild("Backpack"))
 	sc(lp.Character)
-
-	table.sort(ft, function(a, b)
-		local an, bn = string.lower(a.Name), string.lower(b.Name)
-		local as = (string.find(an, "classic") and 3 or 0) + (string.find(an, "sword") and 2 or 0) + (string.find(an, "blade") and 1 or 0)
-		local bs = (string.find(bn, "classic") and 3 or 0) + (string.find(bn, "sword") and 2 or 0) + (string.find(bn, "blade") and 1 or 0)
-		return as > bs
+	table.sort(f, function(x, y)
+		local xn = x.Name:lower()
+		local yn = y.Name:lower()
+		local xs = (string.find(xn, "classic") and 3 or 0) + (string.find(xn, "sword") and 2 or 0) + (string.find(xn, "blade") and 1 or 0)
+		local ys = (string.find(yn, "classic") and 3 or 0) + (string.find(yn, "sword") and 2 or 0) + (string.find(yn, "blade") and 1 or 0)
+		return xs > ys
 	end)
-	return ft[1]
+	return f[1]
 end
 
-local function wfc(plr, tmo)
-	tmo = tmo or 10
-	local st = os.clock()
-	local ch = plr.Character
-
-	if not ch or not ch.Parent then
-		local done, cn = false, nil
-		cn = plr.CharacterAdded:Connect(function(c)
-			ch = c
-			done = true
-			cn:Disconnect()
-		end)
-		while not done and os.clock() - st < tmo do
-			task.wait(0.1)
-			if plr.Character and plr.Character.Parent then
-				ch = plr.Character
-				done = true
-				if cn then cn:Disconnect() end
+local function wfc(p, t)
+	t = t or ct
+	local d = os.clock() + t
+	repeat
+		local c = p.Character
+		if c and c.Parent then
+			local h = c:FindFirstChildOfClass("Humanoid")
+			local r = c:FindFirstChild("HumanoidRootPart")
+			if h and r and h.Parent and r.Parent then
+				return c, h, r
 			end
 		end
-		if cn then cn:Disconnect() end
-	end
+		task.wait(0.05)
+	until os.clock() >= d
+	return nil
+end
 
-	if not ch or not ch.Parent then return nil end
+local cm = workspace.CurrentCamera
 
-	local hum = ch:FindFirstChildOfClass("Humanoid") or ch:WaitForChild("Humanoid", tmo)
-	local hrp = ch:FindFirstChild("HumanoidRootPart") or ch:WaitForChild("HumanoidRootPart", tmo)
-
-	if hum and hrp and hum.Parent and hrp.Parent then
-		return ch, hum, hrp
+local function lk()
+	for n in pairs(bz) do
+		local p = ps:FindFirstChild(n)
+		if p and p.Parent then
+			local c = p.Character
+			local r = c and c:FindFirstChild("HumanoidRootPart")
+			if r and r.Parent then
+				return r
+			end
+		end
 	end
 	return nil
 end
 
-local function smite(adm, trg)
-	if not trg or not trg.Parent then return end
+rs.RenderStepped:Connect(function()
+	local c = lp.Character
+	local r = c and c:FindFirstChild("HumanoidRootPart")
+	if not r then return end
+	local k = lk()
+	if k then
+		r.CFrame = CFrame.lookAt((k.CFrame * of).Position, k.Position)
+	else
+		r.CFrame = pc
+	end
+	if cm and cm.CameraSubject ~= r then
+		cm.CameraSubject = r
+	end
+end)
 
-	local t = fs()
-	if not t then
-		warn("No sword found.")
+local function rsm(a, t)
+	local tw = fs()
+	if not tw then
+		warn("[BotLoop] no sword found")
 		return
 	end
-
-	local ac, ah, ar = wfc(adm, 8)
+	local ac, ah = wfc(a, ct)
 	if not ac then return end
-
-	local tc, th, tr = wfc(trg, 8)
-	if not tc then return end
-	if th.Health <= 0 then return end
-
-	if not table.find(lpd, trg.Name) then
-		table.insert(lpd, trg.Name)
+	local tc, th, tr = wfc(t, ct)
+	if not tc or th.Health <= 0 then return end
+	if not table.find(tl, t.Name) then
+		table.insert(tl, t.Name)
 	end
-	is = true
-
-	local s = nil
-	s = adm.Backpack:FindFirstChild(t.Name) or ac:FindFirstChild(t.Name) or nil
-	if not s then
-		is = false
-		return
-	end
-
-	if ah then ah:EquipTool(s) end
-	task.wait(0.2)
-
-	local st = os.clock()
-	while true do
-		if os.clock() - st >= to then break end
-		if not trg.Parent then break end
-		if not th.Parent or not tr.Parent then
-			tc, th, tr = wfc(trg, 5)
+	local s = a.Backpack:FindFirstChild(tw.Name) or ac:FindFirstChild(tw.Name)
+	if not s then return end
+	ah:EquipTool(s)
+	task.wait(swd)
+	local d = os.clock() + sl
+	while os.clock() < d do
+		if not t.Parent then break end
+		if not (th.Parent and tr.Parent) then
+			tc, th, tr = wfc(t, 5)
 			if not tc then break end
 		end
 		if th.Health <= 0 then break end
-		if not ah.Parent or ah.Health <= 0 or s.Parent ~= ac then break end
-		if not table.find(lpd, trg.Name) then break end
-
-		if ar and tr and s then
-			ar.CFrame = CFrame.lookAt((tr.CFrame * CFrame.new(0, 0, 2.5)).Position, tr.Position)
-			s:Activate()
-		end
-		task.wait(ad)
+		if not (ah.Parent and ah.Health > 0) then break end
+		if s.Parent ~= ac then break end
+		if not table.find(tl, t.Name) then break end
+		s:Activate()
+		task.wait(swd)
 	end
-
-	if ah and ah.Parent then ah:UnequipTools() end
-	is = false
+	if ah.Parent then
+		ah:UnequipTools()
+	end
 end
 
-function cmds(msg, plr)
-	if not table.find(adms, plr.UserId) then return end
-	if db then return end
-	db = true
-
-	local ck = msg:match("^/smite%s+(%S+)")
-	local cl = msg:match("^/loop%s+(%S+)")
-	local cu = msg:match("^/unloop%s+(%S+)")
-	local cs = msg:match("^/saveloop%s+(%S+)")
-	local csu = msg:match("^/saveunloop%s+(%S+)")
-	local ch = msg:match("^/cmds")
-	local cp = msg:match("^/permloops")
-	local ct = msg:match("^/temploops")
-	local ca = msg:match("^/admins")
-
-	if ck then
-		local trg = gp(ck)
-		if trg and trg ~= plr then
-			task.spawn(function() smite(lp, trg) end)
-		end
+local function sm(a, t)
+	if not t or not t.Parent then return end
+	local n = t.Name
+	if bz[n] then return end
+	bz[n] = true
+	local ok, e = pcall(rsm, a, t)
+	bz[n] = nil
+	if not ok then
+		warn("[BotLoop] smite error: " .. tostring(e))
 	end
-
-	if cl then
-		local trg = gp(cl)
-		if trg and trg ~= plr then
-			task.spawn(function()
-				while true do
-					task.wait(0.1)
-					if not table.find(lpd, trg.Name) or not trg.Parent then break end
-					smite(lp, trg)
-				end
-			end)
-		end
-	end
-
-	if cu then
-		local trg = gp(cu)
-		local n = trg and trg.Name or cu
-		local i = table.find(lpd, n)
-		if i then table.remove(lpd, i) end
-	end
-
-	if cs then
-		local trg = gp(cs)
-		local n = trg and trg.Name or cs
-		local ok = trg or pcall(function() return ps:GetUserIdFromNameAsync(n) end)
-		if ok then
-			data = srd()
-			if not table.find(data, n) then
-				table.insert(data, n)
-				swd(data)
-			end
-		end
-	end
-
-	if csu then
-		local trg = gp(csu)
-		local n = trg and trg.Name or csu
-		data = srd()
-		local i = table.find(data, n)
-		if i then
-			table.remove(data, i)
-			swd(data)
-		end
-	end
-
-	if ch then
-		task.spawn(function()
-			if tcs:FindFirstChild("TextChannels") then
-				local c = tcs.TextChannels:FindFirstChild("RBXGeneral")
-				if c then
-					c:SendAsync("USE THESE COMMANDS FOR GOOD!!! EXAMPLE: SOMEONE IS REACH EXPLOITING.")
-					task.wait(msgcd)
-					c:SendAsync("NOTE: THESE COMMANDS HAVE A WHITELIST SO DO NOT TRY THEM!")
-					task.wait(msgcd)
-					c:SendAsync("COMMANDS:")
-					task.wait(msgcd)
-					c:SendAsync("/smite [name/display/userid] - kills the player")
-					task.wait(msgcd)
-					c:SendAsync("/loop [name/display/userid] - temporarily loops the player for that server")
-					task.wait(msgcd)
-					c:SendAsync("/unloop [name/display/userid] - unloops the player")
-					task.wait(msgcd)
-					c:SendAsync("/saveloop [name/display/userid] - saves player name to json file in executor workspace to loop them")
-					task.wait(msgcd)
-					c:SendAsync("/saveunloop [name/display/userid] - removes player name from the json file in executor workspace")
-					task.wait(msgcd)
-					c:SendAsync("/temploops - lets you see what users are in the temporary loop kill list")
-					task.wait(msgcd)
-					c:SendAsync("/permloops - lets you see the users of permanently loop killed people")
-					task.wait(msgcd)
-					c:SendAsync("/admins - see the list of people whitelisted")
-					task.wait(msgcd)
-					c:SendAsync("/cmds - this command you used that shows this list")
-				end
-			end
-		end)
-	end
-
-	if cp then
-		task.spawn(function()
-			if tcs:FindFirstChild("TextChannels") then
-				local c = tcs.TextChannels:FindFirstChild("RBXGeneral")
-				if c then
-					c:SendAsync("PERM LOOPED PLAYERS:")
-					local l = srd()
-					if #l == 0 then
-						c:SendAsync("No one.")
-					else
-						for _, n in pairs(l) do
-							task.wait(msgcd)
-							c:SendAsync(tostring(n))
-						end
-					end
-				end
-			end
-		end)
-	end
-
-	if ct then
-		task.spawn(function()
-			if tcs:FindFirstChild("TextChannels") then
-				local c = tcs.TextChannels:FindFirstChild("RBXGeneral")
-				if c then
-					c:SendAsync("TEMP LOOPED PLAYERS:")
-					if #lpd == 0 then
-						c:SendAsync("No one.")
-					else
-						for _, n in pairs(lpd) do
-							task.wait(msgcd)
-							c:SendAsync(tostring(n))
-						end
-					end
-				end
-			end
-		end)
-	end
-
-	if ca then
-		task.spawn(function()
-			if tcs:FindFirstChild("TextChannels") then
-				local c = tcs.TextChannels:FindFirstChild("RBXGeneral")
-				if c then
-					c:SendAsync("ADMINS/WHITELISTED PEOPLE:")
-					for _, id in pairs(adms) do
-						task.wait(msgcd)
-						local s, n = pcall(function() return ps:GetNameFromUserIdAsync(id) end)
-						c:SendAsync(s and n or "Failed to load.")
-					end
-				end
-			end
-		end)
-	end
-
-	task.wait(cd)
-	db = false
 end
 
-ps.PlayerAdded:Connect(function(plr)
-	plr.Chatted:Connect(function(msg) cmds(msg, plr) end)
-end)
-
-task.spawn(function()
-	for _, plr in pairs(ps:GetPlayers()) do
-		plr.Chatted:Connect(function(msg) cmds(msg, plr) end)
+local function csm(p, a)
+	local t = fp(a)
+	if t and t ~= p then
+		task.spawn(sm, lp, t)
 	end
-end)
+end
+
+local function clp(a)
+	local t = fp(a)
+	if not t or t == lp then return end
+	if not table.find(tl, t.Name) then
+		table.insert(tl, t.Name)
+	end
+	task.spawn(function()
+		while t.Parent and table.find(tl, t.Name) do
+			if bz[t.Name] then
+				task.wait(0.1)
+			else
+				sm(lp, t)
+			end
+		end
+	end)
+end
+
+local function cul(a)
+	local t = fp(a)
+	local n = t and t.Name or a
+	local i = table.find(tl, n)
+	if i then
+		table.remove(tl, i)
+	end
+end
+
+local function csl(a)
+	local t = fp(a)
+	local n = t and t.Name or a
+	local ok = t or pcall(function()
+		return ps:GetUserIdFromNameAsync(n)
+	end)
+	if not ok then return end
+	if not table.find(pl, n) then
+		table.insert(pl, n)
+		wp()
+	end
+end
+
+local function csu(a)
+	local t = fp(a)
+	local n = t and t.Name or a
+	local i = table.find(pl, n)
+	if i then
+		table.remove(pl, i)
+		wp()
+	end
+end
+
+local anc
+
+local function an()
+	if anc then return anc end
+	local o = {}
+	for _, i in ipairs(ad) do
+		local ok, n = pcall(function()
+			return ps:GetNameFromUserIdAsync(i)
+		end)
+		o[#o + 1] = ok and n or ("Failed to load (" .. i .. ")")
+	end
+	anc = o
+	return o
+end
+
+local function lo(h, l)
+	sd(h)
+	if #l == 0 then
+		sd("No one.")
+		return
+	end
+	for _, n in ipairs(l) do
+		task.wait(md)
+		sd(tostring(n))
+	end
+end
+
+local function scm()
+	sd("USE THESE COMMANDS FOR GOOD!!! EXAMPLE: SOMEONE IS REACH EXPLOITING.")
+	task.wait(md)
+	sd("NOTE: THESE COMMANDS HAVE A WHITELIST SO DO NOT TRY THEM!")
+	task.wait(md)
+	sd("COMMANDS:")
+	task.wait(md)
+	sd("/smite [name/display/userid] - kills the player")
+	task.wait(md)
+	sd("/loop [name/display/userid] - temporarily loops the player for that server")
+	task.wait(md)
+	sd("/unloop [name/display/userid] - unloops the player")
+	task.wait(md)
+	sd("/saveloop [name/display/userid] - saves player name to json file in executor workspace to loop them")
+	task.wait(md)
+	sd("/saveunloop [name/display/userid] - removes player name from the json file in executor workspace")
+	task.wait(md)
+	sd("/temploops - lets you see what users are in the temporary loop kill list")
+	task.wait(md)
+	sd("/permloops - lets you see the users of permanently loop killed people")
+	task.wait(md)
+	sd("/admins - see the list of people whitelisted")
+	task.wait(md)
+	sd("/cmds - this command you used that shows this list")
+end
+
+local function cd(m, p)
+	if not table.find(ad, p.UserId) then return end
+	if cl then return end
+	cl = true
+
+	local a = m:match("^/smite%s+(%S+)")
+	local b = m:match("^/loop%s+(%S+)")
+	local c = m:match("^/unloop%s+(%S+)")
+	local d = m:match("^/saveloop%s+(%S+)")
+	local e = m:match("^/saveunloop%s+(%S+)")
+
+	if a then csm(p, a) end
+	if b then clp(b) end
+	if c then cul(c) end
+	if d then csl(d) end
+	if e then csu(e) end
+
+	if m:match("^/cmds") then
+		task.spawn(scm)
+	elseif m:match("^/permloops") then
+		task.spawn(lo, "PERM LOOPED PLAYERS:", pl)
+	elseif m:match("^/temploops") then
+		task.spawn(lo, "TEMP LOOPED PLAYERS:", tl)
+	elseif m:match("^/admins") then
+		task.spawn(lo, "ADMINS/WHITELISTED PEOPLE:", an())
+	end
+
+	task.wait(cc)
+	cl = false
+end
+
+local function hk(p)
+	p.Chatted:Connect(function(m)
+		cd(m, p)
+	end)
+end
+
+ps.PlayerAdded:Connect(hk)
+for _, p in ipairs(ps:GetPlayers()) do
+	hk(p)
+end
 
 task.spawn(function()
 	while true do
 		task.wait(0.15)
-		task.spawn(function()
-			local l = srd()
-			for _, n in pairs(l) do
-				local trg = ps:FindFirstChild(n)
-				if trg then smite(lp, trg) end
-			end
-		end)
-	end
-end)
-
-task.spawn(function()
-	while true do
-		if math.random(-5,5) == 0 then task.wait() end
-		if is == false then
-			if lp.Character then
-				local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
-				if hrp then hrp.CFrame = CFrame.new(10000, 10000, 10000) if workspace.CurrentCamera then workspace.CurrentCamera.CameraSubject = hrp end end
+		for _, n in ipairs(pl) do
+			local t = ps:FindFirstChild(n)
+			if t and t.Parent and not bz[n] then
+				task.spawn(sm, lp, t)
 			end
 		end
 	end
