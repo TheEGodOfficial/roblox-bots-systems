@@ -18,7 +18,7 @@ local md=3
 local dd="BotLoopData"
 local df="BotLoopData/Data.json"
 local cf="BotLoopData/config.lua"
-local ver="1.0.9 test"
+local ver="1.0.9 test2"
 local ad={
 	4603013888,
 	545411642,
@@ -91,17 +91,28 @@ local cl=false
 local wh_cmd=nil
 local wh_chat=nil
 local io2=isfile and isfolder and makefolder and writefile and readfile
+local function sd(m)
+	local tc=tcs:FindFirstChild("TextChannels")
+	local rc=tc and tc:FindFirstChild("RBXGeneral")
+	if rc then pcall(function() rc:SendAsync(m) end) end
+end
 if io2 then
 	if not isfolder(dd) then makefolder(dd) end
 	if isfile(cf) then
-		local ok,res=pcall(function()
-			return loadstring(readfile(cf))()
+		local web = nil
+		local s,e=pcall(function()
+			local fil = readfile(cf)
+			web = loadstring(fil)()
 		end)
-		if ok and type(res)=="table" then
-			wh_cmd=res.cmd
-			wh_chat=res.chat
+		if s and type(web)=="table" then
+			wh_cmd=web.cmd
+			wh_chat=web.chat
+		else
+			warn("failed to get webhooks: "..e)
 		end
 	end
+else
+	sd("Exe doesnt support file system functions")
 end
 local function dw(url,payload)
 	if not url or url=="" then return end
@@ -160,11 +171,6 @@ local function lch(sp,msg)
 			timestamp=os.date("!%Y-%m-%dT%H:%M:%SZ"),
 		}},
 	})
-end
-local function sd(m)
-	local tc=tcs:FindFirstChild("TextChannels")
-	local rc=tc and tc:FindFirstChild("RBXGeneral")
-	if rc then pcall(function() rc:SendAsync(m) end) end
 end
 local function rp()
 	local ok,r=pcall(function() return hs:JSONDecode(readfile(df)) end)
