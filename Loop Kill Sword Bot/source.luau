@@ -17,7 +17,6 @@ local ct = 8
 local md = 3
 local dd = "BotLoopData"
 local df = "BotLoopData/Data.json"
-local ver = "1.0.6"
 local ad = {
 	4603013888,
 	545411642,
@@ -79,7 +78,7 @@ local sk = {
 local tl = {}
 local pl = {}
 local bz = {}
-local al = {}
+
 local cl = false
 local function sd(m)
 	local tc = tcs:FindFirstChild("TextChannels")
@@ -185,7 +184,10 @@ local function lk()
 	return nil
 end
 local nfActive = false
-setsimulationradius(2 ^ 24)
+setsimulationradius(2^24)
+lp.CharacterAdded:Connect(function()
+ setsimulationradius(2^24)
+end)
 rs.RenderStepped:Connect(function()
 	if nfActive then return end
 	local c = lp.Character
@@ -206,17 +208,53 @@ rs.RenderStepped:Connect(function()
 	end
 	if cm and cm.CameraSubject ~= r then cm.CameraSubject = r end
 end)
+local function isVoided(part)
+	if not part or not part.Parent then return false end
+	local p = part.Position
+	if p.X ~= p.X or p.Y ~= p.Y or p.Z ~= p.Z then return true end
+	if p.Magnitude > 5e4 then return true end
+	if p.Y < workspace.FallenPartsDestroyHeight - 100 then return true end
+	return false
+end
+local function fallbackFling(hrp,targetHrp)
+ if not hrp or not targetHrp or not targetHrp.Parent then return end
+ hrp.CFrame=targetHrp.CFrame
+ local bv=Instance.new("BodyVelocity")
+ bv.MaxForce=Vector3.new(1/0,1/0,1/0)
+ bv.Velocity=Vector3.new(9e4,9e4,9e4)
+ bv.Parent=hrp
+ task.wait(0.2)
+ bv:Destroy()
+end
 local function nf(targetHrp)
 	local c = lp.Character
 	local hrp = c and c:FindFirstChild("HumanoidRootPart")
-	if not hrp then return end
+	if not hrp then return false end
 	local nan = 0 / 0
 	local h = c and c:FindFirstChildOfClass("Humanoid")
+	local angle = 0
+	local startPos = targetHrp and targetHrp.Parent and targetHrp.Position
 	nfActive = true
 	for i = 1, 60 do
-		if h and h.Parent then h.PlatformStand = false end
+		if isVoided(hrp) then
+			nfActive = false
+			return false
+		end
 		if targetHrp and targetHrp.Parent then
-			hrp.CFrame = targetHrp.CFrame
+			local tp = targetHrp.Position
+			if tp.X ~= tp.X or tp.Y ~= tp.Y or tp.Z ~= tp.Z or tp.Magnitude > 5e4 then
+				nfActive = false
+				return true
+			end
+		end
+		if h and h.Parent then
+			h.PlatformStand = false
+			pcall(sethiddenproperty, h, "MoveDirectionInternal", Vector3.new(nan, nan, nan))
+			pcall(sethiddenproperty, h, "NetworkHumanoidState", Enum.HumanoidStateType.Freefall.Value)
+		end
+		if targetHrp and targetHrp.Parent then
+			angle = angle + 8
+			hrp.CFrame = targetHrp.CFrame * CFrame.Angles(0, math.rad(angle), 0)
 			pcall(sethiddenproperty, hrp, "PhysicsRepRootRef", InstanceHandle.new(targetHrp))
 		end
 		hrp.AssemblyLinearVelocity = Vector3.new(nan, nan, nan)
@@ -226,6 +264,14 @@ local function nf(targetHrp)
 		task.wait()
 	end
 	nfActive = false
+	if startPos and targetHrp and targetHrp.Parent then
+		local moved = (targetHrp.Position - startPos).Magnitude
+		if moved < 60 then
+			fallbackFling(hrp, targetHrp)
+			return false
+		end
+	end
+	return true
 end
 local function gb(tool)
 	return tool:FindFirstChild("Blade")
@@ -249,9 +295,7 @@ local function rsm(a, t, ld)
 	local bl = gb(s)
 	local dl = os.clock() + sl
 	while os.clock() < dl do
-		task.wait()
 		if not t.Parent then break end
-		if ld and not (table.find(tl, t.Name) or table.find(pl, t.Name)) then break end
 		if not (th.Parent and tr.Parent) then
 			tc, th, tr = wfc(t, 5)
 			if not tc then break end
@@ -259,10 +303,12 @@ local function rsm(a, t, ld)
 		if th.Health <= 0 then break end
 		if not (ah.Parent and ah.Health > 0) then break end
 		if s.Parent ~= ac then break end
+		if ld and not (table.find(tl, t.Name) or table.find(pl, t.Name)) then break end
 		if bl and tr and tr.Parent then
 			pcall(firetouchinterest, bl, tr, 0)
 		end
 		s:Activate()
+		task.wait(swd)
 		if bl and tr and tr.Parent then
 			pcall(firetouchinterest, bl, tr, 1)
 		end
@@ -280,36 +326,22 @@ local function sm(a, t, ld)
 end
 local function csm(_, a)
 	local t = fp(a)
-	if table.find(ad, t.UserId) then return end
 	if t and t ~= lp then task.spawn(sm, lp, t, false) end
 end
 local function clp(a)
 	local t = fp(a)
-	if table.find(ad, t.UserId) then return end
 	if not t or t == lp then return end
 	local n = t.Name
 	if not table.find(tl, n) then tl[#tl + 1] = n end
-	if al[n] then return end
-	al[n] = true
-	task.spawn(function()
-		while sv:FindFirstChild(n) and table.find(tl, n) do
-			rs.RenderStepped:Wait()
-			if bz[n] then task.wait(0.1)
-			else sm(lp, t, true) end
-		end
-		al[n] = nil
-	end)
 end
 local function cul(a)
 	local t = fp(a)
-	if table.find(ad, t.UserId) then return end
 	local n = t and t.Name or a
 	local i = table.find(tl, n)
 	if i then table.remove(tl, i) end
 end
 local function csl(a)
 	local t = fp(a)
-	if table.find(ad, t.UserId) then return end
 	local n = t and t.Name or a
 	local ok = t or pcall(function() return sv:GetUserIdFromNameAsync(n) end)
 	if not ok then return end
@@ -320,7 +352,6 @@ local function csl(a)
 end
 local function csu(a)
 	local t = fp(a)
-	if table.find(ad, t.UserId) then return end
 	local n = t and t.Name or a
 	local i = table.find(pl, n)
 	if i then
@@ -360,12 +391,9 @@ local cmdl = {
 	"/cmds - shows this command list",
 }
 local function scm()
-	sd("USE THESE COMMANDS FOR GOOD!!! EXAMPLE: SOMEONE IS REACH EXPLOITING.")
-	task.wait(md)
-	sd("NOTE: THESE COMMANDS HAVE A WHITELIST SO DO NOT TRY THEM!")
 	for i, line in ipairs(cmdl) do
-		task.wait(md)
 		sd(line)
+		if i < #cmdl then task.wait(md) end
 	end
 end
 tcs.MessageReceived:Connect(function(msg)
@@ -432,13 +460,26 @@ sv.PlayerAdded:Connect(hk)
 for _, p in ipairs(sv:GetPlayers()) do hk(p) end
 task.spawn(function()
 	while true do
-		task.wait(0.15)
+		task.wait(0.1)
+		local combined = {}
 		for _, n in ipairs(pl) do
-			local t = sv:FindFirstChild(n)
-			if t and t.Parent and not bz[n] then
-				task.spawn(sm, lp, t, true)
+			if not table.find(combined, n) then
+				table.insert(combined, n)
 			end
+		end
+		for _, n in ipairs(tl) do
+			if not table.find(combined, n) then
+				table.insert(combined, n)
+			end
+		end
+		for _, n in ipairs(combined) do
+			local inPerm = table.find(pl, n)
+			local inTemp = table.find(tl, n)
+			if not inPerm and not inTemp then continue end
+			local t = sv:FindFirstChild(n)
+			if not t or not t.Parent then continue end
+			if bz[n] then continue end
+			sm(lp, t, true)
 		end
 	end
 end)
-print("Loop Kill Sword Bot V"..ver.." loaded.")
