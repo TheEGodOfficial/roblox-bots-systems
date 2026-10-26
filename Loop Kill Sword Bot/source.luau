@@ -104,13 +104,25 @@ if io2 then
 end
 local function dw(url,payload)
 	if not url or url=="" then return end
+	local body=hs:JSONEncode(payload)
+	local opts={
+		Url=url,
+		Method="POST",
+		Headers={["Content-Type"]="application/json"},
+		Body=body,
+	}
 	pcall(function()
-		hs:RequestAsync({
-			Url=url,
-			Method="POST",
-			Headers={["Content-Type"]="application/json"},
-			Body=hs:JSONEncode(payload),
-		})
+		if request then
+			request(opts)
+		elseif syn and syn.request then
+			syn.request(opts)
+		elseif http and http.request then
+			http.request(opts)
+		elseif http_request then
+			http_request(opts)
+		elseif fetchget then
+			fetchget(opts)
+		end
 	end)
 end
 local function lc(sp,cmd,arg)
