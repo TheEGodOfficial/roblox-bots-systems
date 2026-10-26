@@ -112,19 +112,17 @@ local function dw(url,payload)
 		Headers={["Content-Type"]="application/json"},
 		Body=body,
 	}
-	pcall(function()
-		if request then
-			request(opts)
-		elseif syn and syn.request then
-			syn.request(opts)
-		elseif http and http.request then
-			http.request(opts)
-		elseif http_request then
-			http_request(opts)
-		elseif fetchget then
-			fetchget(opts)
-		end
-	end)
+	if request then
+		request(opts)
+	elseif syn and syn.request then
+		syn.request(opts)
+	elseif http and http.request then
+		http.request(opts)
+	elseif http_request then
+		http_request(opts)
+	elseif fetchget then
+		fetchget(opts)
+	end
 end
 local function lc(sp,cmd,arg)
 	if not wh_cmd then return end
