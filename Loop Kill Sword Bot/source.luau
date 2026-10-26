@@ -52,9 +52,28 @@ local ad={
 	3551233751,
 }
 local sk={
-	"sword","blade","katana","saber","sabre","scimitar","cutlass","rapier",
-	"claymore","broadsword","longsword","shortsword","greatsword","zweihander",
-	"falchion","gladius","dagger","knife","machete","axe","battleaxe","hatchet",
+	"sword",
+	"blade",
+	"katana",
+	"saber",
+	"sabre",
+	"scimitar",
+	"cutlass",
+	"rapier",
+	"claymore",
+	"broadsword",
+	"longsword",
+	"shortsword",
+	"greatsword",
+	"zweihander",
+	"falchion",
+	"gladius",
+	"dagger",
+	"knife",
+	"machete",
+	"axe",
+	"battleaxe",
+	"hatchet",
 }
 local tl={}
 local pl={}
@@ -210,6 +229,7 @@ local function nf(th)
 	local hm=c and c:FindFirstChildOfClass("Humanoid")
 	local ag=0
 	local sp=th and th.Parent and th.Position
+	local ls=os.clock()
 	na=true
 	for i=1,60 do
 		if iv(h) then
@@ -225,28 +245,33 @@ local function nf(th)
 		end
 		if hm and hm.Parent then
 			hm.PlatformStand=false
-			pcall(sethiddenproperty,hm,"MoveDirectionInternal",Vector3.new(nn,nn,nn))
+			if os.clock()-ls>0.08 then
+				pcall(sethiddenproperty,hm,"MoveDirectionInternal",Vector3.new(nn,nn,nn))
+			else
+				pcall(sethiddenproperty,hm,"MoveDirectionInternal",Vector3.zero)
+			end
 			pcall(sethiddenproperty,hm,"NetworkHumanoidState",Enum.HumanoidStateType.Freefall.Value)
 		end
 		if th and th.Parent then
 			ag=ag+8
-			h.CFrame=th.CFrame*CFrame.Angles(0,math.rad(ag),0)
+			h.CFrame=th.CFrame*CFrame.Angles(0,math.rad(ag),0)+Vector3.new(math.sin(os.clock()*40)*0.15,0,math.cos(os.clock()*40)*0.15)
 			pcall(sethiddenproperty,h,"PhysicsRepRootRef",InstanceHandle.new(th))
 		end
-		h.AssemblyLinearVelocity=Vector3.new(nn,nn,nn)
-		h.AssemblyAngularVelocity=Vector3.new(nn,nn,nn)
-		sethiddenproperty(h,"Velocity",Vector3.new(nn,nn,nn))
-		sethiddenproperty(h,"RotVelocity",Vector3.new(nn,nn,nn))
+		h.AssemblyLinearVelocity=Vector3.zero
+		h.AssemblyAngularVelocity=Vector3.zero
+		pcall(sethiddenproperty,h,"Velocity",Vector3.zero)
+		pcall(sethiddenproperty,h,"RotVelocity",Vector3.zero)
+		if sp and th and th.Parent and i==8 then
+			local mv=(th.Position-sp).Magnitude
+			if mv<60 then
+				na=false
+				ff(h,th)
+				return false
+			end
+		end
 		task.wait()
 	end
 	na=false
-	if sp and th and th.Parent then
-		local mv=(th.Position-sp).Magnitude
-		if mv<60 then
-			ff(h,th)
-			return false
-		end
-	end
 	return true
 end
 local function gb(t)
