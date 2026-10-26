@@ -17,7 +17,8 @@ local ct=8
 local md=3
 local dd="BotLoopData"
 local df="BotLoopData/Data.json"
-local ver = "1.0.7"
+local cf="BotLoopData/config.lua"
+local ver="1.0.8"
 local ad={
 	4603013888,
 	545411642,
@@ -80,12 +81,74 @@ local tl={}
 local pl={}
 local bz={}
 local cl=false
+local wh_cmd=nil
+local wh_chat=nil
+local io2=isfile and isfolder and makefolder and writefile and readfile
+if io2 then
+	if not isfolder(dd) then makefolder(dd) end
+	if isfile(cf) then
+		local ok,res=pcall(function()
+			return loadstring(readfile(cf))()
+		end)
+		if ok and type(res)=="table" then
+			wh_cmd=res.cmd
+			wh_chat=res.chat
+		end
+	end
+end
+local function dw(url,payload)
+	if not url or url=="" then return end
+	pcall(function()
+		hs:RequestAsync({
+			Url=url,
+			Method="POST",
+			Headers={["Content-Type"]="application/json"},
+			Body=hs:JSONEncode(payload),
+		})
+	end)
+end
+local function lc(sp,cmd,arg)
+	if not wh_cmd then return end
+	local gi=game.JobId~="" and game.JobId or "unknown"
+	local pn=sp and sp.Name or "?"
+	local pi=sp and tostring(sp.UserId) or "?"
+	task.spawn(dw,wh_cmd,{
+		embeds={{
+			title="Command Log",
+			color=0xE74C3C,
+			fields={
+				{name="Executor",value=pn.." ("..pi..")",inline=true},
+				{name="Command",value=cmd,inline=true},
+				{name="Argument",value=arg~="" and arg or "none",inline=true},
+				{name="Server",value=gi,inline=false},
+			},
+			timestamp=os.date("!%Y-%m-%dT%H:%M:%SZ"),
+		}},
+	})
+end
+local function lch(sp,msg)
+	if not wh_chat then return end
+	local gi=game.JobId~="" and game.JobId or "unknown"
+	local pn=sp and sp.Name or "?"
+	local pi=sp and tostring(sp.UserId) or "?"
+	task.spawn(dw,wh_chat,{
+		embeds={{
+			title="Chat Log",
+			color=0x3498DB,
+			fields={
+				{name="Player",value=pn.." ("..pi..")",inline=true},
+				{name="Message",value=msg,inline=false},
+				{name="Server",value=gi,inline=false},
+			},
+			timestamp=os.date("!%Y-%m-%dT%H:%M:%SZ"),
+		}},
+	})
+end
 local function sd(m)
 	local tc=tcs:FindFirstChild("TextChannels")
 	local rc=tc and tc:FindFirstChild("RBXGeneral")
 	if rc then pcall(function() rc:SendAsync(m) end) end
 end
-local io2=isfile and isfolder and makefolder and writefile and readfile
 local function rp()
 	local ok,r=pcall(function() return hs:JSONDecode(readfile(df)) end)
 	if ok and type(r)=="table" then
@@ -102,7 +165,6 @@ local function wp()
 	pcall(writefile,df,hs:JSONEncode(pl))
 end
 if io2 then
-	if not isfolder(dd) then makefolder(dd) end
 	if isfile(df) then pl=rp() else pcall(writefile,df,"[]") end
 else
 	sd("Exe doesnt support file system functions")
@@ -326,44 +388,57 @@ local function sm(a,t,ld)
 	bz[n]=nil
 	if not ok then warn("[BotLoop] attack error: "..tostring(e)) end
 end
-local function csm(_,a)
+local function csm(sp,a)
 	local t=fp(a)
-	if table.find(ad, t.UserId) then return end
-	if t and t~=lp then task.spawn(sm,lp,t,false) end
+	if not t then return end
+	if table.find(ad,t.UserId) then return end
+	if t~=lp then
+		lc(sp,"/smite",a)
+		task.spawn(sm,lp,t,false)
+	end
 end
-local function clp(a)
+local function clp(sp,a)
 	local t=fp(a)
-	if table.find(ad, t.UserId) then return end
-	if not t or t==lp then return end
+	if not t then return end
+	if table.find(ad,t.UserId) then return end
+	if t==lp then return end
 	local n=t.Name
-	if not table.find(tl,n) then tl[#tl+1]=n end
+	if not table.find(tl,n) then
+		tl[#tl+1]=n
+		lc(sp,"/loop",a)
+	end
 end
-local function cul(a)
+local function cul(sp,a)
 	local t=fp(a)
-	if table.find(ad, t.UserId) then return end
+	if t and table.find(ad,t.UserId) then return end
 	local n=t and t.Name or a
 	local i=table.find(tl,n)
-	if i then table.remove(tl,i) end
+	if i then
+		table.remove(tl,i)
+		lc(sp,"/unloop",a)
+	end
 end
-local function csl(a)
+local function csl(sp,a)
 	local t=fp(a)
-	if table.find(ad, t.UserId) then return end
+	if t and table.find(ad,t.UserId) then return end
 	local n=t and t.Name or a
 	local ok=t or pcall(function() return sv:GetUserIdFromNameAsync(n) end)
 	if not ok then return end
 	if not table.find(pl,n) then
 		pl[#pl+1]=n
 		wp()
+		lc(sp,"/saveloop",a)
 	end
 end
-local function csu(a)
+local function csu(sp,a)
 	local t=fp(a)
-	if table.find(ad, t.UserId) then return end
+	if t and table.find(ad,t.UserId) then return end
 	local n=t and t.Name or a
 	local i=table.find(pl,n)
 	if i then
 		table.remove(pl,i)
 		wp()
+		lc(sp,"/saveunloop",a)
 	end
 end
 local ac
@@ -407,14 +482,7 @@ local function scm()
 		task.wait(md)
 	end
 end
-local function ph(msg)
-	if not msg.TextSource then return end
-	local sp=sv:GetPlayerByUserId(msg.TextSource.UserId)
-	if not sp then return end
-	if not table.find(ad,sp.UserId) then return end
-	if cl then return end
-	cl=true
-	local tx=msg.Text
+local function pc2(sp,tx)
 	local lx=tx:lower()
 	local sa=tx:match("^/smite%s+(.+)")
 	local sb=tx:match("^/loop%s+(.+)")
@@ -422,48 +490,45 @@ local function ph(msg)
 	local se=tx:match("^/saveloop%s+(.+)")
 	local sg=tx:match("^/saveunloop%s+(.+)")
 	if sa then csm(sp,sa:gsub("^%s+",""):gsub("%s+$","")) end
-	if sb then clp(sb:gsub("^%s+",""):gsub("%s+$","")) end
-	if sc then cul(sc:gsub("^%s+",""):gsub("%s+$","")) end
-	if se then csl(se:gsub("^%s+",""):gsub("%s+$","")) end
-	if sg then csu(sg:gsub("^%s+",""):gsub("%s+$","")) end
+	if sb then clp(sp,sb:gsub("^%s+",""):gsub("%s+$","")) end
+	if sc then cul(sp,sc:gsub("^%s+",""):gsub("%s+$","")) end
+	if se then csl(sp,se:gsub("^%s+",""):gsub("%s+$","")) end
+	if sg then csu(sp,sg:gsub("^%s+",""):gsub("%s+$","")) end
 	if lx:match("^/cmds") then
+		lc(sp,"/cmds","")
 		task.spawn(scm)
 	elseif lx:match("^/permloops") then
+		lc(sp,"/permloops","")
 		task.spawn(lo,"PERM LOOPED PLAYERS:",pl)
 	elseif lx:match("^/temploops") then
+		lc(sp,"/temploops","")
 		task.spawn(lo,"TEMP LOOPED PLAYERS:",tl)
 	elseif lx:match("^/admins") then
+		lc(sp,"/admins","")
 		task.spawn(lo,"ADMINS/WHITELISTED PEOPLE:",ga())
 	end
+end
+local function ph(msg)
+	if not msg.TextSource then return end
+	local sp=sv:GetPlayerByUserId(msg.TextSource.UserId)
+	if not sp then return end
+	local tx=msg.Text
+	lch(sp,tx)
+	if not table.find(ad,sp.UserId) then return end
+	if cl then return end
+	cl=true
+	pc2(sp,tx)
 	task.wait(cd)
 	cl=false
 end
 tcs.MessageReceived:Connect(ph)
 local function hk(p)
 	p.Chatted:Connect(function(m)
+		lch(p,m)
 		if not table.find(ad,p.UserId) then return end
 		if cl then return end
 		cl=true
-		local lx=m:lower()
-		local sa=m:match("^/smite%s+(.+)")
-		local sb=m:match("^/loop%s+(.+)")
-		local sc=m:match("^/unloop%s+(.+)")
-		local se=m:match("^/saveloop%s+(.+)")
-		local sg=m:match("^/saveunloop%s+(.+)")
-		if sa then csm(p,sa:gsub("^%s+",""):gsub("%s+$","")) end
-		if sb then clp(sb:gsub("^%s+",""):gsub("%s+$","")) end
-		if sc then cul(sc:gsub("^%s+",""):gsub("%s+$","")) end
-		if se then csl(se:gsub("^%s+",""):gsub("%s+$","")) end
-		if sg then csu(sg:gsub("^%s+",""):gsub("%s+$","")) end
-		if lx:match("^/cmds") then
-			task.spawn(scm)
-		elseif lx:match("^/permloops") then
-			task.spawn(lo,"PERM LOOPED PLAYERS:",pl)
-		elseif lx:match("^/temploops") then
-			task.spawn(lo,"TEMP LOOPED PLAYERS:",tl)
-		elseif lx:match("^/admins") then
-			task.spawn(lo,"ADMINS/WHITELISTED PEOPLE:",ga())
-		end
+		pc2(p,m)
 		task.wait(cd)
 		cl=false
 	end)
