@@ -11,11 +11,13 @@ local lp=sv.LocalPlayer
 local pc=CFrame.new(10000,10000,10000)
 local of=CFrame.new(0,0,2.5)
 local cd=3
+local swd=0.2
 local sl=60
 local ct=8
 local md=3
 local dd="BotLoopData"
 local df="BotLoopData/Data.json"
+local ver = "1.0.7"
 local ad={
 	4603013888,
 	545411642,
@@ -296,7 +298,6 @@ local function rsm(a,t,ld)
 	local dl=os.clock()+sl
 	while os.clock()<dl do
 		if not t.Parent then break end
-		if ld and not(table.find(tl,t.Name) or table.find(pl,t.Name)) then break end
 		if not(th.Parent and tr.Parent) then
 			tc,th,tr=wfc(t,5)
 			if not tc then break end
@@ -304,10 +305,12 @@ local function rsm(a,t,ld)
 		if th.Health<=0 then break end
 		if not(ah.Parent and ah.Health>0) then break end
 		if s.Parent~=ac then break end
+		if ld and not(table.find(tl,t.Name) or table.find(pl,t.Name)) then break end
 		if bl and tr and tr.Parent then
 			pcall(firetouchinterest,bl,tr,0)
 		end
 		s:Activate()
+		task.wait(swd)
 		if bl and tr and tr.Parent then
 			pcall(firetouchinterest,bl,tr,1)
 		end
@@ -325,22 +328,26 @@ local function sm(a,t,ld)
 end
 local function csm(_,a)
 	local t=fp(a)
+	if table.find(ad, t.UserId) then return end
 	if t and t~=lp then task.spawn(sm,lp,t,false) end
 end
 local function clp(a)
 	local t=fp(a)
+	if table.find(ad, t.UserId) then return end
 	if not t or t==lp then return end
 	local n=t.Name
 	if not table.find(tl,n) then tl[#tl+1]=n end
 end
 local function cul(a)
 	local t=fp(a)
+	if table.find(ad, t.UserId) then return end
 	local n=t and t.Name or a
 	local i=table.find(tl,n)
 	if i then table.remove(tl,i) end
 end
 local function csl(a)
 	local t=fp(a)
+	if table.find(ad, t.UserId) then return end
 	local n=t and t.Name or a
 	local ok=t or pcall(function() return sv:GetUserIdFromNameAsync(n) end)
 	if not ok then return end
@@ -351,6 +358,7 @@ local function csl(a)
 end
 local function csu(a)
 	local t=fp(a)
+	if table.find(ad, t.UserId) then return end
 	local n=t and t.Name or a
 	local i=table.find(pl,n)
 	if i then
@@ -375,7 +383,7 @@ local function lo(h,l)
 	if #l==0 then sd("No one.") return end
 	for i,n in ipairs(l) do
 		sd(tostring(n))
-		if i<#l then task.wait(md) end
+		task.wait(md)
 	end
 end
 local cmdl={
@@ -390,9 +398,13 @@ local cmdl={
 	"/cmds - shows this command list",
 }
 local function scm()
+	sd("USE THESE COMMANDS FOR GOOD!!! EXAMPLE: SOMEONE IS REACH EXPLOITING.")
+	task.wait(md)
+	sd("NOTE: THESE COMMANDS HAVE A WHITELIST SO DO NOT TRY THEM!")
+	task.wait(md)
 	for i,ln in ipairs(cmdl) do
 		sd(ln)
-		if i<#cmdl then task.wait(md) end
+		task.wait(md)
 	end
 end
 local function ph(msg)
@@ -479,3 +491,4 @@ task.spawn(function()
 		end
 	end
 end)
+print("Loop Kill Sword Bot V"..ver.." loaded.")
