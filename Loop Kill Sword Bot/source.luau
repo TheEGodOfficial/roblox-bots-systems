@@ -18,7 +18,7 @@ local md=3
 local dd="BotLoopData"
 local df="BotLoopData/Data.json"
 local cf="BotLoopData/config.lua"
-local ver="1.0.9 test3"
+local ver="1.0.9 test4"
 local ad={
 	4603013888,
 	545411642,
@@ -101,6 +101,7 @@ if io2 then
 	if isfile(cf) then
 		local web = nil
 		local s,e=pcall(function()
+			print(readfile(cf))
 			local fil = readfile(cf)
 			web = loadstring(fil)()
 		end)
