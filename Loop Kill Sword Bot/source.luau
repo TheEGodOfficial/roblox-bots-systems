@@ -3,21 +3,21 @@ MIT License
 
 Copyright (c) 2026 E God/Fred
 ]]
-local sv = game:GetService("Players")
-local tcs = game:GetService("TextChatService")
-local hs = game:GetService("HttpService")
-local rs = game:GetService("RunService")
-local lp = sv.LocalPlayer
-local pc = CFrame.new(10000, 10000, 10000)
-local of = CFrame.new(0, 0, 2.5)
-local cd = 3
-local swd = 0.2
-local sl = 60
-local ct = 8
-local md = 3
-local dd = "BotLoopData"
-local df = "BotLoopData/Data.json"
-local ad = {
+local sv=game:GetService("Players")
+local tcs=game:GetService("TextChatService")
+local hs=game:GetService("HttpService")
+local rs=game:GetService("RunService")
+local lp=sv.LocalPlayer
+local pc=CFrame.new(10000,10000,10000)
+local of=CFrame.new(0,0,2.5)
+local cd=3
+local swd=0.2
+local sl=60
+local ct=8
+local md=3
+local dd="BotLoopData"
+local df="BotLoopData/Data.json"
+local ad={
 	4603013888,
 	545411642,
 	2479604659,
@@ -51,47 +51,27 @@ local ad = {
 	1010936055,
 	3551233751,
 }
-local sk = {
-	"sword",
-	"blade",
-	"katana",
-	"saber",
-	"sabre",
-	"scimitar",
-	"cutlass",
-	"rapier",
-	"claymore",
-	"broadsword",
-	"longsword",
-	"shortsword",
-	"greatsword",
-	"zweihander",
-	"falchion",
-	"gladius",
-	"dagger",
-	"knife",
-	"machete",
-	"axe",
-	"battleaxe",
-	"hatchet",
+local sk={
+	"sword","blade","katana","saber","sabre","scimitar","cutlass","rapier",
+	"claymore","broadsword","longsword","shortsword","greatsword","zweihander",
+	"falchion","gladius","dagger","knife","machete","axe","battleaxe","hatchet",
 }
-local tl = {}
-local pl = {}
-local bz = {}
-
-local cl = false
+local tl={}
+local pl={}
+local bz={}
+local cl=false
 local function sd(m)
-	local tc = tcs:FindFirstChild("TextChannels")
-	local rc = tc and tc:FindFirstChild("RBXGeneral")
+	local tc=tcs:FindFirstChild("TextChannels")
+	local rc=tc and tc:FindFirstChild("RBXGeneral")
 	if rc then pcall(function() rc:SendAsync(m) end) end
 end
-local io2 = isfile and isfolder and makefolder and writefile and readfile
+local io2=isfile and isfolder and makefolder and writefile and readfile
 local function rp()
-	local ok, r = pcall(function() return hs:JSONDecode(readfile(df)) end)
-	if ok and type(r) == "table" then
-		local o = {}
-		for _, v in ipairs(r) do
-			if type(v) == "string" then o[#o + 1] = v end
+	local ok,r=pcall(function() return hs:JSONDecode(readfile(df)) end)
+	if ok and type(r)=="table" then
+		local o={}
+		for _,v in ipairs(r) do
+			if type(v)=="string" then o[#o+1]=v end
 		end
 		return o
 	end
@@ -99,44 +79,44 @@ local function rp()
 end
 local function wp()
 	if not io2 then return end
-	pcall(writefile, df, hs:JSONEncode(pl))
+	pcall(writefile,df,hs:JSONEncode(pl))
 end
 if io2 then
 	if not isfolder(dd) then makefolder(dd) end
-	if isfile(df) then pl = rp() else pcall(writefile, df, "[]") end
+	if isfile(df) then pl=rp() else pcall(writefile,df,"[]") end
 else
 	sd("Exe doesnt support file system functions")
 end
 local function fp(a)
-	if not a or a == "" then return nil end
-	a = tostring(a):lower()
-	local u = tonumber(a)
+	if not a or a=="" then return nil end
+	a=tostring(a):lower()
+	local u=tonumber(a)
 	if u then
-		for _, p in ipairs(sv:GetPlayers()) do
-			if p.UserId == u then return p end
+		for _,p in ipairs(sv:GetPlayers()) do
+			if p.UserId==u then return p end
 		end
 	end
 	local pt
-	for _, p in ipairs(sv:GetPlayers()) do
-		local n, d = p.Name:lower(), p.DisplayName:lower()
-		if n == a or d == a then return p end
-		if not pt and (string.find(n, a, 1, true) or string.find(d, a, 1, true)) then
-			pt = p
+	for _,p in ipairs(sv:GetPlayers()) do
+		local n,d=p.Name:lower(),p.DisplayName:lower()
+		if n==a or d==a then return p end
+		if not pt and(string.find(n,a,1,true) or string.find(d,a,1,true)) then
+			pt=p
 		end
 	end
 	return pt
 end
 local function fs()
-	local f, sn = {}, {}
+	local f,sn={},{}
 	local function sc(c)
 		if not c then return end
-		for _, i in ipairs(c:GetChildren()) do
+		for _,i in ipairs(c:GetChildren()) do
 			if i:IsA("Tool") and not sn[i] then
-				local n = i.Name:lower()
-				for _, k in ipairs(sk) do
-					if string.find(n, k, 1, true) then
-						sn[i] = true
-						f[#f + 1] = i
+				local n=i.Name:lower()
+				for _,k in ipairs(sk) do
+					if string.find(n,k,1,true) then
+						sn[i]=true
+						f[#f+1]=i
 						break
 					end
 				end
@@ -145,241 +125,237 @@ local function fs()
 	end
 	sc(lp:FindFirstChild("Backpack"))
 	sc(lp.Character)
-	table.sort(f, function(x, y)
-		local xn, yn = x.Name:lower(), y.Name:lower()
-		local xs = (string.find(xn, "classic") and 3 or 0)
-			+ (string.find(xn, "sword") and 2 or 0)
-			+ (string.find(xn, "blade") and 1 or 0)
-		local ys = (string.find(yn, "classic") and 3 or 0)
-			+ (string.find(yn, "sword") and 2 or 0)
-			+ (string.find(yn, "blade") and 1 or 0)
-		return xs > ys
+	table.sort(f,function(x,y)
+		local xn,yn=x.Name:lower(),y.Name:lower()
+		local xs=(string.find(xn,"classic") and 3 or 0)+(string.find(xn,"sword") and 2 or 0)+(string.find(xn,"blade") and 1 or 0)
+		local ys=(string.find(yn,"classic") and 3 or 0)+(string.find(yn,"sword") and 2 or 0)+(string.find(yn,"blade") and 1 or 0)
+		return xs>ys
 	end)
 	return f[1]
 end
-local function wfc(p, t)
-	t = t or ct
-	local d = os.clock() + t
+local function wfc(p,t)
+	t=t or ct
+	local d=os.clock()+t
 	repeat
-		local c = p.Character
+		local c=p.Character
 		if c and c.Parent then
-			local h = c:FindFirstChildOfClass("Humanoid")
-			local r = c:FindFirstChild("HumanoidRootPart")
-			if h and r and h.Parent and r.Parent then return c, h, r end
+			local h=c:FindFirstChildOfClass("Humanoid")
+			local r=c:FindFirstChild("HumanoidRootPart")
+			if h and r and h.Parent and r.Parent then return c,h,r end
 		end
 		task.wait(0.05)
-	until os.clock() >= d
+	until os.clock()>=d
 	return nil
 end
-local cm = workspace.CurrentCamera
+local cm=workspace.CurrentCamera
 local function lk()
 	for n in pairs(bz) do
-		local p = sv:FindFirstChild(n)
+		local p=sv:FindFirstChild(n)
 		if p then
-			local c = p.Character
-			local r = c and c:FindFirstChild("HumanoidRootPart")
+			local c=p.Character
+			local r=c and c:FindFirstChild("HumanoidRootPart")
 			if r and r.Parent then return r end
 		end
 	end
 	return nil
 end
-local nfActive = false
+local na=false
 setsimulationradius(2^24)
 lp.CharacterAdded:Connect(function()
- setsimulationradius(2^24)
+	setsimulationradius(2^24)
 end)
 rs.RenderStepped:Connect(function()
-	if nfActive then return end
-	local c = lp.Character
-	local r = c and c:FindFirstChild("HumanoidRootPart")
-	local h = c and c:FindFirstChildOfClass("Humanoid")
+	if na then return end
+	local c=lp.Character
+	local r=c and c:FindFirstChild("HumanoidRootPart")
+	local h=c and c:FindFirstChildOfClass("Humanoid")
 	if not r or not h then return end
-	local k = lk()
+	local k=lk()
 	if k then
-		h.PlatformStand = false
-		r.CFrame = CFrame.lookAt((k.CFrame * of).Position, k.Position)
-		pcall(sethiddenproperty, r, "PhysicsRepRootRef", InstanceHandle.new(k))
+		h.PlatformStand=false
+		r.CFrame=CFrame.lookAt((k.CFrame*of).Position,k.Position)
+		pcall(sethiddenproperty,r,"PhysicsRepRootRef",InstanceHandle.new(k))
 	else
-		h.PlatformStand = true
-		r.CFrame = pc
-		r.AssemblyLinearVelocity = Vector3.zero
-		r.AssemblyAngularVelocity = Vector3.zero
-		pcall(sethiddenproperty, r, "PhysicsRepRootRef", InstanceHandle.new(nil))
+		h.PlatformStand=true
+		r.CFrame=pc
+		r.AssemblyLinearVelocity=Vector3.zero
+		r.AssemblyAngularVelocity=Vector3.zero
+		pcall(sethiddenproperty,r,"PhysicsRepRootRef",InstanceHandle.new(nil))
 	end
-	if cm and cm.CameraSubject ~= r then cm.CameraSubject = r end
+	if cm and cm.CameraSubject~=r then cm.CameraSubject=r end
 end)
-local function isVoided(part)
-	if not part or not part.Parent then return false end
-	local p = part.Position
-	if p.X ~= p.X or p.Y ~= p.Y or p.Z ~= p.Z then return true end
-	if p.Magnitude > 5e4 then return true end
-	if p.Y < workspace.FallenPartsDestroyHeight - 100 then return true end
+local function iv(pt)
+	if not pt or not pt.Parent then return false end
+	local p=pt.Position
+	if p.X~=p.X or p.Y~=p.Y or p.Z~=p.Z then return true end
+	if p.Magnitude>5e4 then return true end
+	if p.Y<workspace.FallenPartsDestroyHeight-100 then return true end
 	return false
 end
-local function fallbackFling(hrp,targetHrp)
- if not hrp or not targetHrp or not targetHrp.Parent then return end
- hrp.CFrame=targetHrp.CFrame
- local bv=Instance.new("BodyVelocity")
- bv.MaxForce=Vector3.new(1/0,1/0,1/0)
- bv.Velocity=Vector3.new(9e4,9e4,9e4)
- bv.Parent=hrp
- task.wait(0.2)
- bv:Destroy()
+local function ff(h,t)
+	if not h or not t or not t.Parent then return end
+	h.CFrame=t.CFrame
+	local bv=Instance.new("BodyVelocity")
+	bv.MaxForce=Vector3.new(1/0,1/0,1/0)
+	bv.Velocity=Vector3.new(9e4,9e4,9e4)
+	bv.Parent=h
+	task.wait(0.2)
+	bv:Destroy()
 end
-local function nf(targetHrp)
-	local c = lp.Character
-	local hrp = c and c:FindFirstChild("HumanoidRootPart")
-	if not hrp then return false end
-	local nan = 0 / 0
-	local h = c and c:FindFirstChildOfClass("Humanoid")
-	local angle = 0
-	local startPos = targetHrp and targetHrp.Parent and targetHrp.Position
-	nfActive = true
-	for i = 1, 60 do
-		if isVoided(hrp) then
-			nfActive = false
+local function nf(th)
+	local c=lp.Character
+	local h=c and c:FindFirstChild("HumanoidRootPart")
+	if not h then return false end
+	local nn=0/0
+	local hm=c and c:FindFirstChildOfClass("Humanoid")
+	local ag=0
+	local sp=th and th.Parent and th.Position
+	na=true
+	for i=1,60 do
+		if iv(h) then
+			na=false
 			return false
 		end
-		if targetHrp and targetHrp.Parent then
-			local tp = targetHrp.Position
-			if tp.X ~= tp.X or tp.Y ~= tp.Y or tp.Z ~= tp.Z or tp.Magnitude > 5e4 then
-				nfActive = false
+		if th and th.Parent then
+			local tp=th.Position
+			if tp.X~=tp.X or tp.Y~=tp.Y or tp.Z~=tp.Z or tp.Magnitude>5e4 then
+				na=false
 				return true
 			end
 		end
-		if h and h.Parent then
-			h.PlatformStand = false
-			pcall(sethiddenproperty, h, "MoveDirectionInternal", Vector3.new(nan, nan, nan))
-			pcall(sethiddenproperty, h, "NetworkHumanoidState", Enum.HumanoidStateType.Freefall.Value)
+		if hm and hm.Parent then
+			hm.PlatformStand=false
+			pcall(sethiddenproperty,hm,"MoveDirectionInternal",Vector3.new(nn,nn,nn))
+			pcall(sethiddenproperty,hm,"NetworkHumanoidState",Enum.HumanoidStateType.Freefall.Value)
 		end
-		if targetHrp and targetHrp.Parent then
-			angle = angle + 8
-			hrp.CFrame = targetHrp.CFrame * CFrame.Angles(0, math.rad(angle), 0)
-			pcall(sethiddenproperty, hrp, "PhysicsRepRootRef", InstanceHandle.new(targetHrp))
+		if th and th.Parent then
+			ag=ag+8
+			h.CFrame=th.CFrame*CFrame.Angles(0,math.rad(ag),0)
+			pcall(sethiddenproperty,h,"PhysicsRepRootRef",InstanceHandle.new(th))
 		end
-		hrp.AssemblyLinearVelocity = Vector3.new(nan, nan, nan)
-		hrp.AssemblyAngularVelocity = Vector3.new(nan, nan, nan)
-		sethiddenproperty(hrp, "Velocity", Vector3.new(nan, nan, nan))
-		sethiddenproperty(hrp, "RotVelocity", Vector3.new(nan, nan, nan))
+		h.AssemblyLinearVelocity=Vector3.new(nn,nn,nn)
+		h.AssemblyAngularVelocity=Vector3.new(nn,nn,nn)
+		sethiddenproperty(h,"Velocity",Vector3.new(nn,nn,nn))
+		sethiddenproperty(h,"RotVelocity",Vector3.new(nn,nn,nn))
 		task.wait()
 	end
-	nfActive = false
-	if startPos and targetHrp and targetHrp.Parent then
-		local moved = (targetHrp.Position - startPos).Magnitude
-		if moved < 60 then
-			fallbackFling(hrp, targetHrp)
+	na=false
+	if sp and th and th.Parent then
+		local mv=(th.Position-sp).Magnitude
+		if mv<60 then
+			ff(h,th)
 			return false
 		end
 	end
 	return true
 end
-local function gb(tool)
-	return tool:FindFirstChild("Blade")
-		or tool:FindFirstChild("Handle")
-		or tool:FindFirstChildOfClass("MeshPart")
-		or tool:FindFirstChildOfClass("UnionOperation")
-		or tool:FindFirstChildOfClass("Part")
+local function gb(t)
+	return t:FindFirstChild("Blade")
+		or t:FindFirstChild("Handle")
+		or t:FindFirstChildOfClass("MeshPart")
+		or t:FindFirstChildOfClass("UnionOperation")
+		or t:FindFirstChildOfClass("Part")
 end
-local function rsm(a, t, ld)
-	local tw = fs()
+local function rsm(a,t,ld)
+	local tw=fs()
 	if not tw then warn("[BotLoop] no sword found") return end
-	local ac, ah = wfc(a, ct)
+	local ac,ah=wfc(a,ct)
 	if not ac then return end
-	local tc, th, tr = wfc(t, ct)
-	if not tc or th.Health <= 0 then return end
-	local s = a.Backpack:FindFirstChild(tw.Name) or ac:FindFirstChild(tw.Name)
+	local tc,th,tr=wfc(t,ct)
+	if not tc or th.Health<=0 then return end
+	local s=a.Backpack:FindFirstChild(tw.Name) or ac:FindFirstChild(tw.Name)
 	if not s then return end
-	if ld and math.random(2) == 1 then pcall(nf, tr) end
+	if ld and math.random(2)==1 then pcall(nf,tr) end
 	ah:EquipTool(s)
 	task.wait(swd)
-	local bl = gb(s)
-	local dl = os.clock() + sl
-	while os.clock() < dl do
+	local bl=gb(s)
+	local dl=os.clock()+sl
+	while os.clock()<dl do
 		if not t.Parent then break end
-		if not (th.Parent and tr.Parent) then
-			tc, th, tr = wfc(t, 5)
+		if not(th.Parent and tr.Parent) then
+			tc,th,tr=wfc(t,5)
 			if not tc then break end
 		end
-		if th.Health <= 0 then break end
-		if not (ah.Parent and ah.Health > 0) then break end
-		if s.Parent ~= ac then break end
-		if ld and not (table.find(tl, t.Name) or table.find(pl, t.Name)) then break end
+		if th.Health<=0 then break end
+		if not(ah.Parent and ah.Health>0) then break end
+		if s.Parent~=ac then break end
+		if ld and not(table.find(tl,t.Name) or table.find(pl,t.Name)) then break end
 		if bl and tr and tr.Parent then
-			pcall(firetouchinterest, bl, tr, 0)
+			pcall(firetouchinterest,bl,tr,0)
 		end
 		s:Activate()
 		task.wait(swd)
 		if bl and tr and tr.Parent then
-			pcall(firetouchinterest, bl, tr, 1)
+			pcall(firetouchinterest,bl,tr,1)
 		end
 	end
 	if ah.Parent then ah:UnequipTools() end
 end
-local function sm(a, t, ld)
+local function sm(a,t,ld)
 	if not t or not t.Parent then return end
-	local n = t.Name
+	local n=t.Name
 	if bz[n] then return end
-	bz[n] = true
-	local ok, e = pcall(rsm, a, t, ld)
-	bz[n] = nil
-	if not ok then warn("[BotLoop] attack error: " .. tostring(e)) end
+	bz[n]=true
+	local ok,e=pcall(rsm,a,t,ld)
+	bz[n]=nil
+	if not ok then warn("[BotLoop] attack error: "..tostring(e)) end
 end
-local function csm(_, a)
-	local t = fp(a)
-	if t and t ~= lp then task.spawn(sm, lp, t, false) end
+local function csm(_,a)
+	local t=fp(a)
+	if t and t~=lp then task.spawn(sm,lp,t,false) end
 end
 local function clp(a)
-	local t = fp(a)
-	if not t or t == lp then return end
-	local n = t.Name
-	if not table.find(tl, n) then tl[#tl + 1] = n end
+	local t=fp(a)
+	if not t or t==lp then return end
+	local n=t.Name
+	if not table.find(tl,n) then tl[#tl+1]=n end
 end
 local function cul(a)
-	local t = fp(a)
-	local n = t and t.Name or a
-	local i = table.find(tl, n)
-	if i then table.remove(tl, i) end
+	local t=fp(a)
+	local n=t and t.Name or a
+	local i=table.find(tl,n)
+	if i then table.remove(tl,i) end
 end
 local function csl(a)
-	local t = fp(a)
-	local n = t and t.Name or a
-	local ok = t or pcall(function() return sv:GetUserIdFromNameAsync(n) end)
+	local t=fp(a)
+	local n=t and t.Name or a
+	local ok=t or pcall(function() return sv:GetUserIdFromNameAsync(n) end)
 	if not ok then return end
-	if not table.find(pl, n) then
-		pl[#pl + 1] = n
+	if not table.find(pl,n) then
+		pl[#pl+1]=n
 		wp()
 	end
 end
 local function csu(a)
-	local t = fp(a)
-	local n = t and t.Name or a
-	local i = table.find(pl, n)
+	local t=fp(a)
+	local n=t and t.Name or a
+	local i=table.find(pl,n)
 	if i then
-		table.remove(pl, i)
+		table.remove(pl,i)
 		wp()
 	end
 end
-local anc
-local function an()
-	if anc then return anc end
-	local o = {}
-	for _, i in ipairs(ad) do
-		local ok, n = pcall(function() return sv:GetNameFromUserIdAsync(i) end)
-		o[#o + 1] = ok and n or ("Failed to load (" .. i .. ")")
+local ac
+local function ga()
+	if ac then return ac end
+	local o={}
+	for _,i in ipairs(ad) do
+		local ok,n=pcall(function() return sv:GetNameFromUserIdAsync(i) end)
+		o[#o+1]=ok and n or("Failed to load ("..i..")")
 	end
-	anc = o
+	ac=o
 	return o
 end
-local function lo(h, l)
+local function lo(h,l)
 	sd(h)
 	task.wait(md)
-	if #l == 0 then sd("No one."); return end
-	for i, n in ipairs(l) do
+	if #l==0 then sd("No one.") return end
+	for i,n in ipairs(l) do
 		sd(tostring(n))
-		if i < #l then task.wait(md) end
+		if i<#l then task.wait(md) end
 	end
 end
-local cmdl = {
+local cmdl={
 	"/smite [name/display/userid] - kills the player",
 	"/loop [name/display/userid] - temporarily loops the player for that server",
 	"/unloop [name/display/userid] - unloops the player",
@@ -391,95 +367,92 @@ local cmdl = {
 	"/cmds - shows this command list",
 }
 local function scm()
-	for i, line in ipairs(cmdl) do
-		sd(line)
-		if i < #cmdl then task.wait(md) end
+	for i,ln in ipairs(cmdl) do
+		sd(ln)
+		if i<#cmdl then task.wait(md) end
 	end
 end
-tcs.MessageReceived:Connect(function(msg)
+local function ph(msg)
 	if not msg.TextSource then return end
-	local spk = sv:GetPlayerByUserId(msg.TextSource.UserId)
-	if not spk then return end
-	if not table.find(ad, spk.UserId) then return end
+	local sp=sv:GetPlayerByUserId(msg.TextSource.UserId)
+	if not sp then return end
+	if not table.find(ad,sp.UserId) then return end
 	if cl then return end
-	cl = true
-	local txt = msg.Text
-	local lo2 = txt:lower()
-	local sa = txt:match("^/smite%s+(.+)")
-	local sb = txt:match("^/loop%s+(.+)")
-	local sc = txt:match("^/unloop%s+(.+)")
-	local se = txt:match("^/saveloop%s+(.+)")
-	local sg = txt:match("^/saveunloop%s+(.+)")
-	if sa then csm(spk, sa:gsub("^%s+", ""):gsub("%s+$", "")) end
-	if sb then clp(sb:gsub("^%s+", ""):gsub("%s+$", "")) end
-	if sc then cul(sc:gsub("^%s+", ""):gsub("%s+$", "")) end
-	if se then csl(se:gsub("^%s+", ""):gsub("%s+$", "")) end
-	if sg then csu(sg:gsub("^%s+", ""):gsub("%s+$", "")) end
-	if lo2:match("^/cmds") then
+	cl=true
+	local tx=msg.Text
+	local lx=tx:lower()
+	local sa=tx:match("^/smite%s+(.+)")
+	local sb=tx:match("^/loop%s+(.+)")
+	local sc=tx:match("^/unloop%s+(.+)")
+	local se=tx:match("^/saveloop%s+(.+)")
+	local sg=tx:match("^/saveunloop%s+(.+)")
+	if sa then csm(sp,sa:gsub("^%s+",""):gsub("%s+$","")) end
+	if sb then clp(sb:gsub("^%s+",""):gsub("%s+$","")) end
+	if sc then cul(sc:gsub("^%s+",""):gsub("%s+$","")) end
+	if se then csl(se:gsub("^%s+",""):gsub("%s+$","")) end
+	if sg then csu(sg:gsub("^%s+",""):gsub("%s+$","")) end
+	if lx:match("^/cmds") then
 		task.spawn(scm)
-	elseif lo2:match("^/permloops") then
-		task.spawn(lo, "PERM LOOPED PLAYERS:", pl)
-	elseif lo2:match("^/temploops") then
-		task.spawn(lo, "TEMP LOOPED PLAYERS:", tl)
-	elseif lo2:match("^/admins") then
-		task.spawn(lo, "ADMINS/WHITELISTED PEOPLE:", an())
+	elseif lx:match("^/permloops") then
+		task.spawn(lo,"PERM LOOPED PLAYERS:",pl)
+	elseif lx:match("^/temploops") then
+		task.spawn(lo,"TEMP LOOPED PLAYERS:",tl)
+	elseif lx:match("^/admins") then
+		task.spawn(lo,"ADMINS/WHITELISTED PEOPLE:",ga())
 	end
 	task.wait(cd)
-	cl = false
-end)
+	cl=false
+end
+tcs.MessageReceived:Connect(ph)
 local function hk(p)
 	p.Chatted:Connect(function(m)
-		if not table.find(ad, p.UserId) then return end
+		if not table.find(ad,p.UserId) then return end
 		if cl then return end
-		cl = true
-		local lo2 = m:lower()
-		local sa = m:match("^/smite%s+(.+)")
-		local sb = m:match("^/loop%s+(.+)")
-		local sc = m:match("^/unloop%s+(.+)")
-		local se = m:match("^/saveloop%s+(.+)")
-		local sg = m:match("^/saveunloop%s+(.+)")
-		if sa then csm(p, sa:gsub("^%s+", ""):gsub("%s+$", "")) end
-		if sb then clp(sb:gsub("^%s+", ""):gsub("%s+$", "")) end
-		if sc then cul(sc:gsub("^%s+", ""):gsub("%s+$", "")) end
-		if se then csl(se:gsub("^%s+", ""):gsub("%s+$", "")) end
-		if sg then csu(sg:gsub("^%s+", ""):gsub("%s+$", "")) end
-		if lo2:match("^/cmds") then
+		cl=true
+		local lx=m:lower()
+		local sa=m:match("^/smite%s+(.+)")
+		local sb=m:match("^/loop%s+(.+)")
+		local sc=m:match("^/unloop%s+(.+)")
+		local se=m:match("^/saveloop%s+(.+)")
+		local sg=m:match("^/saveunloop%s+(.+)")
+		if sa then csm(p,sa:gsub("^%s+",""):gsub("%s+$","")) end
+		if sb then clp(sb:gsub("^%s+",""):gsub("%s+$","")) end
+		if sc then cul(sc:gsub("^%s+",""):gsub("%s+$","")) end
+		if se then csl(se:gsub("^%s+",""):gsub("%s+$","")) end
+		if sg then csu(sg:gsub("^%s+",""):gsub("%s+$","")) end
+		if lx:match("^/cmds") then
 			task.spawn(scm)
-		elseif lo2:match("^/permloops") then
-			task.spawn(lo, "PERM LOOPED PLAYERS:", pl)
-		elseif lo2:match("^/temploops") then
-			task.spawn(lo, "TEMP LOOPED PLAYERS:", tl)
-		elseif lo2:match("^/admins") then
-			task.spawn(lo, "ADMINS/WHITELISTED PEOPLE:", an())
+		elseif lx:match("^/permloops") then
+			task.spawn(lo,"PERM LOOPED PLAYERS:",pl)
+		elseif lx:match("^/temploops") then
+			task.spawn(lo,"TEMP LOOPED PLAYERS:",tl)
+		elseif lx:match("^/admins") then
+			task.spawn(lo,"ADMINS/WHITELISTED PEOPLE:",ga())
 		end
 		task.wait(cd)
-		cl = false
+		cl=false
 	end)
 end
 sv.PlayerAdded:Connect(hk)
-for _, p in ipairs(sv:GetPlayers()) do hk(p) end
+for _,p in ipairs(sv:GetPlayers()) do hk(p) end
 task.spawn(function()
 	while true do
 		task.wait(0.1)
-		local combined = {}
-		for _, n in ipairs(pl) do
-			if not table.find(combined, n) then
-				table.insert(combined, n)
-			end
+		local cb={}
+		for _,n in ipairs(pl) do
+			if not table.find(cb,n) then table.insert(cb,n) end
 		end
-		for _, n in ipairs(tl) do
-			if not table.find(combined, n) then
-				table.insert(combined, n)
-			end
+		for _,n in ipairs(tl) do
+			if not table.find(cb,n) then table.insert(cb,n) end
 		end
-		for _, n in ipairs(combined) do
-			local inPerm = table.find(pl, n)
-			local inTemp = table.find(tl, n)
-			if not inPerm and not inTemp then continue end
-			local t = sv:FindFirstChild(n)
+		for _,n in ipairs(cb) do
+			local ip=table.find(pl,n)
+			local it=table.find(tl,n)
+			if not ip and not it then continue end
+			local t=sv:FindFirstChild(n)
 			if not t or not t.Parent then continue end
 			if bz[n] then continue end
-			sm(lp, t, true)
+			sm(lp,t,true)
 		end
 	end
 end)
