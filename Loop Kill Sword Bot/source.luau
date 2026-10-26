@@ -58,6 +58,7 @@ local ad={
 	3680979328,
 	3365838704,
 	3680954827,
+	11873007906,
 }
 local sk={
 	"sword",
@@ -575,3 +576,4 @@ task.spawn(function()
 	end
 end)
 print("Loop Kill Sword Bot V"..ver.." loaded.")
+32
