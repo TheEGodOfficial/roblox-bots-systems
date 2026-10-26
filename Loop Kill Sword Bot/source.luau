@@ -576,4 +576,3 @@ task.spawn(function()
 	end
 end)
 print("Loop Kill Sword Bot V"..ver.." loaded.")
-32
