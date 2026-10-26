@@ -11,7 +11,6 @@ local lp=sv.LocalPlayer
 local pc=CFrame.new(10000,10000,10000)
 local of=CFrame.new(0,0,2.5)
 local cd=3
-local swd=0.2
 local sl=60
 local ct=8
 local md=3
@@ -297,6 +296,7 @@ local function rsm(a,t,ld)
 	local dl=os.clock()+sl
 	while os.clock()<dl do
 		if not t.Parent then break end
+		if ld and not(table.find(tl,t.Name) or table.find(pl,t.Name)) then break end
 		if not(th.Parent and tr.Parent) then
 			tc,th,tr=wfc(t,5)
 			if not tc then break end
@@ -304,12 +304,10 @@ local function rsm(a,t,ld)
 		if th.Health<=0 then break end
 		if not(ah.Parent and ah.Health>0) then break end
 		if s.Parent~=ac then break end
-		if ld and not(table.find(tl,t.Name) or table.find(pl,t.Name)) then break end
 		if bl and tr and tr.Parent then
 			pcall(firetouchinterest,bl,tr,0)
 		end
 		s:Activate()
-		task.wait(swd)
 		if bl and tr and tr.Parent then
 			pcall(firetouchinterest,bl,tr,1)
 		end
