@@ -18,7 +18,7 @@ local md=3
 local dd="BotLoopData"
 local df="BotLoopData/Data.json"
 local cf="BotLoopData/config.lua"
-local ver="1.0.9 test2"
+local ver="1.0.9 test3"
 local ad={
 	4603013888,
 	545411642,
