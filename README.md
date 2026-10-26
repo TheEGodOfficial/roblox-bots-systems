@@ -35,6 +35,16 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblo
 
 Made in LuaU and very little coding made by AI (The only AI coded stuff is tiny changes and silent errors i couldn't figure out.)
 
+NEW:
+
+There is now two new lua files:
+
+encryptor.lua -> use to encrypt your webhooks. (use in a lua runner and it uses pretty much a custom encryption I would say)
+
+config.lua -> put this in your workspace folder in the BotLoopData folder and then put your encrypted webhooks in it from the encryptor.lua output.
+
+it can work without these but it is recommended
+
 **Code:**
 ```luau
 --[[
