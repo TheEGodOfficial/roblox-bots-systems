@@ -223,12 +223,9 @@ local function fgi()
 	gds = gds:gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
 	if #gds > 400 then gds = gds:sub(1, 397) .. "..." end
 end
--- pr is declared here so both the fgi retry closure and aq() share the same upvalue.
+
 local pr
--- FIX 4: fgi() now retries up to 5 times with a 2s delay between attempts.
--- pcall(fgi) silently swallowed any HTTP failure at load time (executor HTTP
--- stack may not be ready, roproxy may rate-limit, etc.) leaving all game info
--- variables at their defaults forever.
+
 task.spawn(function()
 	local ok, err
 	for attempt = 1, 5 do
@@ -243,9 +240,6 @@ task.spawn(function()
 	if not ok or gnm == "Unknown" then
 		warn("[Range AI Bot] Could not load game info after 5 attempts, prompt will use defaults")
 	end
-	-- FIX 5: rebuild the prompt after fgi completes so it contains real values.
-	-- Previously pr was a static string baked at script load before fgi had any
-	-- chance to populate the variables, so the prompt always showed Unknown/N/A.
 	pr = bpr()
 	warn("[Range AI Bot] Prompt rebuilt with game info")
 end)
@@ -339,10 +333,7 @@ local function bsh()
 	end
 	return table.concat(ln, "\n")
 end
--- FIX 5: bpr() builds the prompt on demand instead of baking it at load time.
--- The old static string.format ran before fgi() had fetched anything, so gnm/gds/
--- gvs etc. were always "Unknown"/"N/A" in the prompt. Now pr is rebuilt after
--- fgi() succeeds (see the retry block below fgi).
+
 local function bpr()
 	return string.format([[
 You are an AI bot character living inside a Roblox game. You exist as a wandering NPC that players can talk to in chat.
