@@ -130,6 +130,7 @@ local function ia(pl)
 	end
 	return false
 end
+local kn = {}
 local function utn(uid)
 	local s = tostring(uid)
 	if kn[s] then return kn[s] end
@@ -177,7 +178,6 @@ local pid = game.PlaceId
 local gid = game.GameId
 local mxp = game.Players.MaxPlayers
 local plc = #sv:GetPlayers()
-local kn = {}
 local pm = {}
 local sch = {}
 local MSH = 250
