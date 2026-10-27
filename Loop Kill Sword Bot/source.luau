@@ -17,7 +17,7 @@ local ct=8
 local md=3
 local dd="BotLoopData"
 local df="BotLoopData/Data.json"
-local ver="1.0.9"
+local ver="1.1.0"
 local ad={
 	4603013888,
 	545411642,
@@ -90,9 +90,13 @@ local cl=false
 local wh_cmd=nil
 local wh_chat=nil
 local env=(getgenv and getgenv()) or shared or _G
-env.PasswordPasteLink=env.PasswordPasteLink or nil
-if env.PasswordPasteLink=="" or env.PasswordPasteLink==" " or env.PasswordPasteLink=="PASSWORD_PROTECTED_PASTEBIN_LINK_HERE" then
-	env.PasswordPasteLink = nil
+env.GistToken=env.GistToken or nil
+env.GistLink=env.GistLink or nil
+if env.GistToken=="" or env.GistToken==" " or env.GistToken=="YOUR_GITHUB_PAT" then
+	env.GistToken=nil
+end
+if env.GistLink=="" or env.GistLink==" " or env.GistLink=="YOUR_GIST_RAW_URL" then
+	env.GistLink = nil
 end
 local io2=isfile and isfolder and makefolder and writefile and readfile
 local function sd(m)
@@ -117,9 +121,24 @@ if io2 then
 else
 	sd("Exe doesnt support file system functions")
 end
-if env.PasswordPasteLink then
+if env.GistToken and env.GistLink then
+	local function req(u,t)
+		local opts={
+			Url=u,
+			Method="GET",
+			Headers={["Authorization"]="token "..t},
+		}
+		if request then return request(opts)
+		elseif syn and syn.request then return syn.request(opts)
+		elseif http and http.request then return http.request(opts)
+		elseif http_request then return http_request(opts)
+		end
+	end
 	local ok,web=pcall(function()
-		return loadstring(game:HttpGet(env.PasswordPasteLink))()
+		local r=req(env.GistLink,env.GistToken)
+		if r and r.Body then
+			return loadstring(r.Body)()
+		end
 	end)
 	if ok and type(web)=="table" then
 		wh_cmd=web.cmd
