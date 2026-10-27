@@ -17,8 +17,7 @@ local ct=8
 local md=3
 local dd="BotLoopData"
 local df="BotLoopData/Data.json"
-local cf="BotLoopData/config.lua"
-local ver="1.0.9 test4"
+local ver="1.0.9"
 local ad={
 	4603013888,
 	545411642,
@@ -90,6 +89,11 @@ local bz={}
 local cl=false
 local wh_cmd=nil
 local wh_chat=nil
+local env=(getgenv and getgenv()) or shared or _G
+env.PasswordPasteLink=env.PasswordPasteLink or nil
+if env.PasswordPasteLink=="" or env.PasswordPasteLink==" " or env.PasswordPasteLink=="PASSWORD_PROTECTED_PASTEBIN_LINK_HERE" then
+	env.PasswordPasteLink = nil
+end
 local io2=isfile and isfolder and makefolder and writefile and readfile
 local function sd(m)
 	local tc=tcs:FindFirstChild("TextChannels")
@@ -98,22 +102,20 @@ local function sd(m)
 end
 if io2 then
 	if not isfolder(dd) then makefolder(dd) end
-	if isfile(cf) then
-		local web = nil
-		local s,e=pcall(function()
-			print(readfile(cf))
-			local fil = readfile(cf)
-			web = loadstring(fil)()
-		end)
-		if s and type(web)=="table" then
-			wh_cmd=web.cmd
-			wh_chat=web.chat
-		else
-			warn("failed to get webhooks: "..e)
-		end
-	end
+	if isfile(df) then pl=rp() else pcall(writefile,df,"[]") end
 else
 	sd("Exe doesnt support file system functions")
+end
+if env.PasswordPasteLink then
+	local ok,web=pcall(function()
+		return loadstring(game:HttpGet(env.PasswordPasteLink))()
+	end)
+	if ok and type(web)=="table" then
+		wh_cmd=web.cmd
+		wh_chat=web.chat
+	else
+		warn("failed to get webhooks: "..tostring(web))
+	end
 end
 local function dw(url,payload)
 	if not url or url=="" then return end
@@ -187,11 +189,6 @@ end
 local function wp()
 	if not io2 then return end
 	pcall(writefile,df,hs:JSONEncode(pl))
-end
-if io2 then
-	if isfile(df) then pl=rp() else pcall(writefile,df,"[]") end
-else
-	sd("Exe doesnt support file system functions")
 end
 local function fp(a)
 	if not a or a=="" then return nil end
