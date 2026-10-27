@@ -17,7 +17,7 @@ local Wandering = true
 local WanderDistance = 40
 local WanderWait = 3
 
-local PasswordPasteLink = nil
+local GithubToken = nil
 
 local Nova = loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/Nova-UI-Library/refs/heads/main/NovaUILib.lua"))()
 
@@ -59,9 +59,9 @@ lkbTab:AddSection("Webhook Config (Optional)")
 lkbTab:AddLabel("Read README.md for more information about how to use this.")
 
 lkbTab:AddTextInput{
-    Text = "Pastebin Link",
-    Key = "pasteLink",
-    Placeholder = "Make a password protected public pastebin link",
+    Text = "Github Token",
+    Key = "gistToken",
+    Placeholder = "Make a classic github token",
     Callback = function(text, enter)
         if enter then PasswordPasteLink = text ~= "" and text or nil end
     end,
