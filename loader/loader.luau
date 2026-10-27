@@ -17,7 +17,8 @@ local Wandering = true
 local WanderDistance = 40
 local WanderWait = 3
 
-local GithubToken = nil
+local GistToken = nil
+local GistLink = nil
 
 local Nova = loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/Nova-UI-Library/refs/heads/main/NovaUILib.lua"))()
 
@@ -47,7 +48,8 @@ lkbTab:AddButton{
     Callback = function()
         local env = (getgenv and getgenv()) or shared or _G
 
-        env.PasswordPasteLink = PasswordPasteLink or "PASSWORD_PROTECTED_PASTEBIN_LINK_HERE"
+        env.GistToken = GistToken or nil
+        env.GistLink = GistLink or nil
 
         loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/Loop%20Kill%20Sword%20Bot/source.luau"))()
         Nova.Notify{ Title = "Loop Kill Bot", Text = "Script loaded.", Type = "success", Duration = 3 }
@@ -59,11 +61,20 @@ lkbTab:AddSection("Webhook Config (Optional)")
 lkbTab:AddLabel("Read README.md for more information about how to use this.")
 
 lkbTab:AddTextInput{
-    Text = "Github Token",
+    Text = "Gist Token",
     Key = "gistToken",
-    Placeholder = "Make a classic github token",
+    Placeholder = "Make a classic token",
     Callback = function(text, enter)
-        if enter then PasswordPasteLink = text ~= "" and text or nil end
+        if enter then GistToken = text ~= "" and text or nil end
+    end,
+}
+
+lkbTab:AddTextInput{
+    Text = "Gist Link",
+    Key = "gistLink",
+    Placeholder = "Private raw gist link",
+    Callback = function(text, enter)
+        if enter then GistLink = text ~= "" and text or nil end
     end,
 }
 
