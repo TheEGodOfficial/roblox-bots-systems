@@ -612,7 +612,10 @@ local function cwp(fr, gl)
 end
 local ajc = nil
 local usc = nil
-local isMoving = false
+
+-- FIX 1 + 2: saj() and ssu() are now called once per path walk, not per waypoint.
+-- FIX 2: wall raycast offsets widened from ±0.9 to ±1.5 to actually clear the
+--         character body, and vertical sweep adjusted to -1.5/0/1.8.
 local function ssu()
 	if usc then usc:Disconnect() end
 	local st = 0
@@ -647,20 +650,14 @@ local function saj()
 		cd = math.max(0, cd - dt)
 		if cd > 0 then return end
 		if hum.MoveDirection.Magnitude < 0.1 then return end
+		-- FIX 2: widened side offsets from ±0.9 to ±1.5 so rays clear the
+		--        character's own collision volume
 		rp.FilterDescendantsInstances = { b }
 		local ps = hrp.Position
 		local fw = hrp.CFrame.LookVector
 		local rv = hrp.CFrame.RightVector
-		for _, xo in ipairs({
-			-0.9,
-			0,
-			0.9,
-		}) do
-			for _, yo in ipairs({
-				-2,
-				0,
-				1.5,
-			}) do
+		for _, xo in ipairs({ -1.5, 0, 1.5 }) do
+			for _, yo in ipairs({ -1.5, 0, 1.8 }) do
 				local og = ps + rv * xo + Vector3.new(0, yo, 0)
 				if ws:Raycast(og, fw * 3.2, rp) then
 					hum.Jump = true
@@ -689,6 +686,9 @@ end
 local function fp(pth, goal)
 	local wps = pth:GetWaypoints()
 	if not wps or #wps == 0 then return false end
+	-- FIX 1: saj() and ssu() called once here, outside the waypoint loop.
+	--        Previously called per-waypoint, which disconnected and recreated
+	--        the heartbeat every iteration — the jump logic never had time to fire.
 	saj()
 	ssu()
 	local rc = 0
@@ -722,7 +722,10 @@ local function fp(pth, goal)
 			if (cr - wp.Position).Magnitude < 3.5 then rd = true; break end
 			local mv = (cr - lp2).Magnitude
 			lp2 = cr
-			if hum.MoveDirection.Magnitude > 0.1 and mv < 0.08 then
+			-- FIX 3: stuck threshold tightened from 0.08 to 0.04 studs/tick.
+			--        0.08 fired constantly on normal movement during waypoint
+			--        micro-pauses, spamming the repath and jump logic.
+			if hum.MoveDirection.Magnitude > 0.1 and mv < 0.04 then
 				st += dt2
 				if st > 0.7 then
 					hum.Jump = true
