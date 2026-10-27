@@ -35,16 +35,6 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblo
 
 Made in LuaU and very little coding made by AI (The only AI coded stuff is tiny changes and silent errors i couldn't figure out.)
 
-NEW:
-
-There is now two new lua files:
-
-encryptor.lua -> use to encrypt your webhooks. (use in a lua runner and it uses pretty much a custom encryption I would say)
-
-config.lua -> Put this on a public pastebin with a password and put the link in the env var (No api required). Make sure you encrypt the webhooks with encryptor.lua and put them in the correct places.
-
-it can work without these but it is recommended
-
 **Code:**
 ```luau
 --[[
@@ -52,9 +42,36 @@ MIT License
 
 Copyright (c) 2026 E God/Fred
 ]]
+
+--[[
+    WEBHOOK SETUP
+    
+    1. go to github.com and create an account if you dont have one
+    2. go to github.com/settings/tokens and click "Generate new token (classic)"
+    3. check the "gist" scope only, generate it, copy the token somewhere safe (you only see it once)
+    4. go to gist.github.com and create a new secret gist
+    5. name the file config.lua and paste this as the content:
+
+        return {
+            cmd  = "YOUR_COMMAND_WEBHOOK_URL",
+            chat = "YOUR_CHAT_WEBHOOK_URL",
+        }
+
+    6. click "Create secret gist", then open the file inside the gist
+    7. click "Raw" and copy that URL
+    8. before running this script, set both env variables in your executor:
+
+        env.GistToken = "YOUR_GITHUB_PAT"
+        env.GistLink  = "YOUR_GIST_RAW_URL"
+
+    if either variable is not set the webhook logging is skipped silently.
+    never share your token or raw gist URL publicly.
+]]
+
 local env = (getgenv and getgenv()) or shared or _G
 
-env.PasswordPasteLink = "PASSWORD_PROTECTED_PASTEBIN_LINK_HERE"
+env.GistToken = "YOUR_GITHUB_PAT"
+env.GistLink = "YOUR_GIST_RAW_URL"
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/Loop%20Kill%20Sword%20Bot/source.luau"))()
 ```
