@@ -41,7 +41,7 @@ There is now two new lua files:
 
 encryptor.lua -> use to encrypt your webhooks. (use in a lua runner and it uses pretty much a custom encryption I would say)
 
-config.lua -> put this in your workspace folder in the BotLoopData folder and then put your encrypted webhooks in it from the encryptor.lua output.
+config.lua -> Put this on a public pastebin with a password and put the link in the env var (No api required). Make sure you encrypt the webhooks with encryptor.lua and put them in the correct places.
 
 it can work without these but it is recommended
 
@@ -52,6 +52,10 @@ MIT License
 
 Copyright (c) 2026 E God/Fred
 ]]
+local env = (getgenv and getgenv()) or shared or _G
+
+env.PasswordPasteLink = "PASSWORD_PROTECTED_PASTEBIN_LINK_HERE"
+
 loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/Loop%20Kill%20Sword%20Bot/source.luau"))()
 ```
 
