@@ -17,6 +17,8 @@ local Wandering = true
 local WanderDistance = 40
 local WanderWait = 3
 
+local PasswordPasteLink = nil
+
 local Nova = loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/Nova-UI-Library/refs/heads/main/NovaUILib.lua"))()
 
 local win = Nova.Window{
@@ -40,12 +42,28 @@ sfbTab:AddButton{
 local lkbTab = win:AddTab("Loop Kill Bot", "🔁")
 
 lkbTab:AddSection("Loader")
-lkbTab:AddLabel("Loads the Loop Kill Sword bot script onto your character.")
 lkbTab:AddButton{
     Text = "Load Script",
     Callback = function()
+        local env = (getgenv and getgenv()) or shared or _G
+
+        env.PasswordPasteLink = PasswordPasteLink or "PASSWORD_PROTECTED_PASTEBIN_LINK_HERE"
+
         loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/Loop%20Kill%20Sword%20Bot/source.luau"))()
         Nova.Notify{ Title = "Loop Kill Bot", Text = "Script loaded.", Type = "success", Duration = 3 }
+    end,
+}
+
+lkbTab:AddSection("Webhook Config (Optional)")
+
+lkbTab:AddLabel("Read README.md for more information about how to use this.")
+
+lkbTab:AddTextInput{
+    Text = "Pastebin Link",
+    Key = "pasteLink",
+    Placeholder = "Make a password protected public pastebin link",
+    Callback = function(text, enter)
+        if enter then PasswordPasteLink = text ~= "" and text or nil end
     end,
 }
 
