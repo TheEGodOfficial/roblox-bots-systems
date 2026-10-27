@@ -100,6 +100,17 @@ local function sd(m)
 	local rc=tc and tc:FindFirstChild("RBXGeneral")
 	if rc then pcall(function() rc:SendAsync(m) end) end
 end
+local function rp()
+	local ok,r=pcall(function() return hs:JSONDecode(readfile(df)) end)
+	if ok and type(r)=="table" then
+		local o={}
+		for _,v in ipairs(r) do
+			if type(v)=="string" then o[#o+1]=v end
+		end
+		return o
+	end
+	return {}
+end
 if io2 then
 	if not isfolder(dd) then makefolder(dd) end
 	if isfile(df) then pl=rp() else pcall(writefile,df,"[]") end
@@ -174,17 +185,6 @@ local function lch(sp,msg)
 			timestamp=os.date("!%Y-%m-%dT%H:%M:%SZ"),
 		}},
 	})
-end
-local function rp()
-	local ok,r=pcall(function() return hs:JSONDecode(readfile(df)) end)
-	if ok and type(r)=="table" then
-		local o={}
-		for _,v in ipairs(r) do
-			if type(v)=="string" then o[#o+1]=v end
-		end
-		return o
-	end
-	return {}
 end
 local function wp()
 	if not io2 then return end
