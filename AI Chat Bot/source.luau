@@ -204,15 +204,11 @@ pcall(function()
 	end
 end)
 local function fgi()
-	local udata = hget("https://apis.roproxy.com/universes/v1/places/" .. pid .. "/universe")
-	if udata and udata.universeId then uid_r = udata.universeId end
-	local gdata = hget("https://games.roproxy.com/v2/games?universeIds=" .. uid_r)
+	local gdata = hget("https://games.roproxy.com/v1/games?universeIds=" .. uid_r)
 	if gdata and gdata.data and gdata.data[1] then
 		local g = gdata.data[1]
 		gvs = g.visits or 0
-		gfv = g.favoritedCount or 0
 		gpl2 = g.playing or 0
-		if g.rating then grt = string.format("%.1f%%", g.rating * 100) end
 		if gnm == "Unknown" then gnm = g.name or gnm end
 		if gds == "No description" then gds = g.description or gds end
 		if cnm == "Unknown" and g.creator then
@@ -222,6 +218,15 @@ local function fgi()
 		end
 		mxp = g.maxPlayers or mxp
 	end
+	local vdata = hget("https://games.roproxy.com/v1/games/" .. uid_r .. "/votes")
+	if vdata then
+		local uv = vdata.upVotes or 0
+		local dv = vdata.downVotes or 0
+		local total = uv + dv
+		if total > 0 then grt = string.format("%.1f%%", (uv / total) * 100) end
+	end
+	local fdata = hget("https://games.roproxy.com/v1/games/" .. uid_r .. "/favorites/count")
+	if fdata and fdata.favoritesCount then gfv = fdata.favoritesCount end
 	gds = gds:gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
 	if #gds > 400 then gds = gds:sub(1, 397) .. "..." end
 end
@@ -626,31 +631,21 @@ local function saj()
 		cd = math.max(0, cd - dt)
 		if cd > 0 then return end
 		if hum.MoveDirection.Magnitude < 0.1 then return end
-		rp.FilterDescendantsInstances = { b }
+		local chr = b
+		if chr then rp.FilterDescendantsInstances = { chr } end
 		local ps = hrp.Position
 		local fw = hrp.CFrame.LookVector
-		local rg = hrp.CFrame.RightVector
-		for _, xo in ipairs({ -1.5, 0, 1.5 }) do
-			for _, yo in ipairs({ -1.5, 0, 1.8 }) do
-				local og = ps + rg * xo + Vector3.new(0, yo, 0)
-				if ws:Raycast(og, fw * 4.5, rp) then
-					hum.Jump = true
-					cd = 0.6
-					return
-				end
-			end
+		local down = Vector3.new(0, -1, 0)
+		local floorHere = ws:Raycast(ps, down * 6, rp)
+		local floorAhead = ws:Raycast(ps + fw * 3, down * 6, rp)
+		local wallAhead = ws:Raycast(ps + Vector3.new(0, 0.5, 0), fw * 4, rp)
+		local hereY = floorHere and floorHere.Position.Y or (ps.Y - 3)
+		local aheadY = floorAhead and floorAhead.Position.Y or (ps.Y - 3)
+		local stepUp = aheadY - hereY > 0.5
+		if stepUp or wallAhead then
+			hum.Jump = true
+			cd = 0.7
 		end
-		local ah = ps + fw * 3.5 + Vector3.new(0, 10, 0)
-		local gd = ps + Vector3.new(0, 10, 0)
-		local ha = ws:Raycast(ah, Vector3.new(0, -15, 0), rp)
-		local hg = ws:Raycast(gd, Vector3.new(0, -15, 0), rp)
-		if ha and hg and (ha.Position.Y - hg.Position.Y > 0.6) then
-			hum.Jump = true; cd = 0.6; return
-		end
-		local fp2 = ps + fw * 2.5 + Vector3.new(0, 2, 0)
-		local fg = ws:Raycast(fp2, Vector3.new(0, -4, 0), rp)
-		local mg = ws:Raycast(ps + Vector3.new(0, 2, 0), Vector3.new(0, -4, 0), rp)
-		if mg and not fg then hum.Jump = true; cd = 0.6; return end
 	end)
 end
 local function xaj()
