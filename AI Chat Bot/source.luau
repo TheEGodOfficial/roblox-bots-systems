@@ -162,16 +162,29 @@ local function gr()
 end
 local rq = gr()
 local function hget(url)
-	local ok, res = pcall(rq, {
-		Url = url,
-		Method = "GET",
-		Headers = { ["Accept"] = "application/json" },
-	})
-	if not ok or not res then return nil end
-	local body = type(res.Body) == "string" and res.Body or (type(res.body) == "string" and res.body)
-	if not body then return nil end
+	local body = nil
+	local ok1, res1 = pcall(function() return game:HttpGetAsync(url) end)
+	if ok1 and type(res1) == "string" and #res1 > 2 then
+		body = res1
+	end
+	if not body then
+		local ok2, res2 = pcall(rq, {
+			Url = url,
+			Method = "GET",
+			Headers = { ["Accept"] = "application/json" },
+		})
+		if ok2 and res2 then
+			body = type(res2.Body) == "string" and res2.Body
+				or (type(res2.body) == "string" and res2.body)
+		end
+	end
+	if not body then
+		warn("[AI Bot] hget failed: " .. url)
+		return nil
+	end
 	local dok, d = pcall(function() return h:JSONDecode(body) end)
 	if dok then return d end
+	warn("[AI Bot] hget JSON parse failed: " .. url)
 	return nil
 end
 local bs = false
@@ -204,6 +217,7 @@ pcall(function()
 	end
 end)
 local function fgi()
+	warn("[AI Bot] fgi start, universeId=" .. tostring(uid_r))
 	local gdata = hget("https://games.roproxy.com/v1/games?universeIds=" .. uid_r)
 	if gdata and gdata.data and gdata.data[1] then
 		local g = gdata.data[1]
@@ -217,6 +231,9 @@ local function fgi()
 			isg = (g.creator.type or ""):lower() == "group"
 		end
 		mxp = g.maxPlayers or mxp
+		warn("[AI Bot] fgi games ok: visits=" .. tostring(gvs) .. " playing=" .. tostring(gpl2))
+	else
+		warn("[AI Bot] fgi games FAILED or empty data")
 	end
 	local vdata = hget("https://games.roproxy.com/v1/games/" .. uid_r .. "/votes")
 	if vdata then
@@ -224,9 +241,17 @@ local function fgi()
 		local dv = vdata.downVotes or 0
 		local total = uv + dv
 		if total > 0 then grt = string.format("%.1f%%", (uv / total) * 100) end
+		warn("[AI Bot] fgi votes ok: rating=" .. grt)
+	else
+		warn("[AI Bot] fgi votes FAILED")
 	end
 	local fdata = hget("https://games.roproxy.com/v1/games/" .. uid_r .. "/favorites/count")
-	if fdata and fdata.favoritesCount then gfv = fdata.favoritesCount end
+	if fdata and fdata.favoritesCount then
+		gfv = fdata.favoritesCount
+		warn("[AI Bot] fgi favorites ok: " .. tostring(gfv))
+	else
+		warn("[AI Bot] fgi favorites FAILED")
+	end
 	gds = gds:gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
 	if #gds > 400 then gds = gds:sub(1, 397) .. "..." end
 end
@@ -608,8 +633,8 @@ local function ssu()
 		if hum.Sit then
 			st += dt
 			hum.Sit = false
-			if st >= 0.1 then hum.Jump = true end
-			if st >= 0.3 then hum.Jump = true; st = 0 end
+			if st >= 0.1 then doJump() end
+			if st >= 0.3 then doJump(); st = 0 end
 		else
 			st = 0
 		end
@@ -618,12 +643,14 @@ end
 local function xsu()
 	if usc then usc:Disconnect(); usc = nil end
 end
+local function doJump()
+	if not hum or not hum.Parent then return end
+	pcall(function() hum:ChangeState(Enum.HumanoidStateType.Jumping) end)
+	hum.Jump = true
+end
 local function saj()
 	if ajc then ajc:Disconnect() end
 	local cd = 0
-	local rp = RaycastParams.new()
-	rp.FilterType = Enum.RaycastFilterType.Exclude
-	rp.FilterDescendantsInstances = { b }
 	ajc = rs.Heartbeat:Connect(function(dt)
 		if not hum or not hum.Parent or not hrp or not hrp.Parent then
 			ajc:Disconnect(); ajc = nil; return
@@ -631,19 +658,20 @@ local function saj()
 		cd = math.max(0, cd - dt)
 		if cd > 0 then return end
 		if hum.MoveDirection.Magnitude < 0.1 then return end
-		local chr = b
-		if chr then rp.FilterDescendantsInstances = { chr } end
+		local chr = lp.Character
+		if not chr then return end
+		local rp = RaycastParams.new()
+		rp.FilterType = Enum.RaycastFilterType.Exclude
+		rp.FilterDescendantsInstances = { chr }
 		local ps = hrp.Position
 		local fw = hrp.CFrame.LookVector
-		local down = Vector3.new(0, -1, 0)
-		local floorHere = ws:Raycast(ps, down * 6, rp)
-		local floorAhead = ws:Raycast(ps + fw * 3, down * 6, rp)
+		local floorHere = ws:Raycast(ps, Vector3.new(0, -6, 0), rp)
+		local floorAhead = ws:Raycast(ps + fw * 3, Vector3.new(0, -6, 0), rp)
 		local wallAhead = ws:Raycast(ps + Vector3.new(0, 0.5, 0), fw * 4, rp)
 		local hereY = floorHere and floorHere.Position.Y or (ps.Y - 3)
 		local aheadY = floorAhead and floorAhead.Position.Y or (ps.Y - 3)
-		local stepUp = aheadY - hereY > 0.5
-		if stepUp or wallAhead then
-			hum.Jump = true
+		if (aheadY - hereY > 0.5) or wallAhead then
+			doJump()
 			cd = 0.7
 		end
 	end)
@@ -665,11 +693,9 @@ local function fp(pth, goal)
 		hum:MoveTo(wp.Position)
 		if wp.Action == Enum.PathWaypointAction.Jump then
 			task.wait(0.05)
-			hum.Jump = true
-			task.wait(0.1)
-			hum.Jump = true
-			task.wait(0.1)
-			hum.Jump = true
+			doJump()
+			task.wait(0.15)
+			doJump()
 		end
 		local sp2 = math.max(hum.WalkSpeed, 4)
 		local ds = (wp.Position - hrp.Position).Magnitude
@@ -691,9 +717,9 @@ local function fp(pth, goal)
 			if hum.MoveDirection.Magnitude > 0.1 and mv < 0.08 then
 				st += dt2
 				if st > 0.7 then
-					hum.Jump = true
-					task.wait(0.1)
-					hum.Jump = true
+					doJump()
+					task.wait(0.15)
+					doJump()
 					hum:MoveTo(wp.Position)
 				end
 				if st > 2 and rc <= 0 and goal then
