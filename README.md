@@ -104,7 +104,7 @@ Copyright (c) 2026 E God/Fred
 	   - Replace the whole string with your real key
 
 	3. Choose a free model (optional)
-	   - Find the line: env.AIModel = "gemini-2.0-flash"
+	   - Find the line: env.AIModel = "gemini-3.1-flash-lite"
 	   - Change it to any free model listed below
 
 	4. Optional settings you can change
