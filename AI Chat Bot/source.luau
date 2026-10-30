@@ -621,64 +621,77 @@ end
 local ajc = nil
 local usc = nil
 local isMoving = false
-local function ssu()
-	if usc then usc:Disconnect() end
-	local st = 0
-	usc = rs.Heartbeat:Connect(function(dt)
-		if not hum or not hum.Parent then
-			usc:Disconnect()
-			usc = nil
-			return
-		end
-		if hum.Sit then
-			st += dt
-			hum.Sit = false
-			if st >= 0.1 then doJump() end
-			if st >= 0.3 then doJump(); st = 0 end
-		else
-			st = 0
-		end
-	end)
-end
-local function xsu()
-	if usc then usc:Disconnect(); usc = nil end
-end
+
+local lastJump = 0
+
 local function doJump()
-	if not hum or not hum.Parent then return end
-	pcall(function() hum:ChangeState(Enum.HumanoidStateType.Jumping) end)
-	hum.Jump = true
+    if not hum or not hum.Parent then return end
+    pcall(function() hum:ChangeState(Enum.HumanoidStateType.Jumping) end)
+    hum.Jump = true
 end
+
+local function tryJump(now, dir)
+    if now - lastJump > 0.55 then
+        lastJump = now
+        hum.Jump = true
+    end
+end
+
+local function obstacleAhead(dir, reach)
+    if not hrp then return false end
+    local d = Vector3.new(dir.X, 0, dir.Z)
+    if d.Magnitude < 0.01 then return false end
+    d = d.Unit * (reach or 1.9)
+    local rp = RaycastParams.new()
+    rp.FilterType = Enum.RaycastFilterType.Exclude
+    rp.FilterDescendantsInstances = { lp.Character or ws }
+    local low = ws:Raycast(hrp.Position - Vector3.new(0, 2, 0), d, rp)
+    if not low or low.Normal.Y > 0.7 then return false end  -- nothing there, or just a slope
+    local high = ws:Raycast(hrp.Position + Vector3.new(0, 3.5, 0), d, rp)
+    return high == nil
+end
+
 local function saj()
-	if ajc then ajc:Disconnect() end
-	local cd = 0
-	ajc = rs.Heartbeat:Connect(function(dt)
-		if not hum or not hum.Parent or not hrp or not hrp.Parent then
-			ajc:Disconnect(); ajc = nil; return
-		end
-		cd = math.max(0, cd - dt)
-		if cd > 0 then return end
-		if hum.MoveDirection.Magnitude < 0.1 then return end
-		local chr = lp.Character
-		if not chr then return end
-		local rp = RaycastParams.new()
-		rp.FilterType = Enum.RaycastFilterType.Exclude
-		rp.FilterDescendantsInstances = { chr }
-		local ps = hrp.Position
-		local fw = hrp.CFrame.LookVector
-		local floorHere = ws:Raycast(ps, Vector3.new(0, -6, 0), rp)
-		local floorAhead = ws:Raycast(ps + fw * 3, Vector3.new(0, -6, 0), rp)
-		local wallAhead = ws:Raycast(ps + Vector3.new(0, 0.5, 0), fw * 4, rp)
-		local hereY = floorHere and floorHere.Position.Y or (ps.Y - 3)
-		local aheadY = floorAhead and floorAhead.Position.Y or (ps.Y - 3)
-		if (aheadY - hereY > 0.5) or wallAhead then
-			doJump()
-			cd = 0.7
-		end
-	end)
+    if ajc then ajc:Disconnect() end
+    local cd = 0
+    ajc = rs.Heartbeat:Connect(function(dt)
+        if not hum or not hum.Parent or not hrp or not hrp.Parent then
+            ajc:Disconnect(); ajc = nil; return
+        end
+        cd = math.max(0, cd - dt)
+        if cd > 0 then return end
+        if hum.Sit then
+            hum.Sit = false
+            doJump()
+            cd = 0.3
+            return
+        end
+        if hum.MoveDirection.Magnitude < 0.1 then return end
+        local chr = lp.Character
+        if not chr then return end
+        local rp = RaycastParams.new()
+        rp.FilterType = Enum.RaycastFilterType.Exclude
+        rp.FilterDescendantsInstances = { chr }
+        local ps = hrp.Position
+        local fw = hrp.CFrame.LookVector
+        local floorHere = ws:Raycast(ps, Vector3.new(0, -6, 0), rp)
+        local floorAhead = ws:Raycast(ps + fw * 3, Vector3.new(0, -6, 0), rp)
+        local hereY = floorHere and floorHere.Position.Y  or (ps.Y - 3)
+        local aheadY = floorAhead and floorAhead.Position.Y or (ps.Y - 3)
+        if aheadY - hereY > 0.5 then
+            doJump()
+            cd = 0.7
+            return
+        end
+        if obstacleAhead(fw, 1.9) then
+            doJump()
+            cd = 0.7
+        end
+    end)
 end
+
 local function xaj()
-	if ajc then ajc:Disconnect(); ajc = nil end
-	xsu()
+    if ajc then ajc:Disconnect(); ajc = nil end
 end
 local function fp(pth, goal)
 	local wps = pth:GetWaypoints()
