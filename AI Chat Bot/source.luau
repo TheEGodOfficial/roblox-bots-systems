@@ -135,8 +135,8 @@ end
 local function uidToName(uid2)
 	local str = tostring(uid2)
 	if kn[str] then return kn[str] end
-	local pl = p:GetPlayerByUserId(uid2)
-	if pl then return pl.Name end
+	local pl = p:GetNameFromUserIdAsync(uid2)
+	if pl then return pl end
 	return "userid:" .. str
 end
 loadIgnoreList()
