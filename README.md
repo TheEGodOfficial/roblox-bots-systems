@@ -88,7 +88,7 @@ MIT License
 Copyright (c) 2026 E God/Fred
 ]]
 
---[[ !!!OUTDATED INFORMATION USE LOADER FOR UPDATED MODELS!!!
+--[[
 	Google Gemini Range-Based AI Chatbot
 
 	SETUP TUTORIAL:
@@ -108,7 +108,7 @@ Copyright (c) 2026 E God/Fred
 	   - Change it to any free model listed below
 
 	4. Optional settings you can change
-	   - env.ChatCommand = "/ai "          → command prefix when far away
+	   - env.ChatCommand = "/ai "          → command prefix when far away (make sure to have a space after)
 	   - env.TokenCount = 200              → max reply length
 	   - env.ChatRadius = 35               → talk range in studs
 	   - env.Wandering = true             → enable/disable wandering
@@ -130,17 +130,19 @@ Copyright (c) 2026 E God/Fred
 
 	FREE MODELS ON GOOGLE GEMINI (as of late October 2026)
 	Just change the env.AIModel variable to any of these:
+	2.5 models may not work. I would suggest 3.1 flash lite.
 
-	"gemini-2.0-flash",
-	"gemini-2.5-flash",
-	"gemini-2.5-flash-lite",
-	"gemini-2.0-flash-lite",
-	"gemini-1.5-flash",
-	"gemini-1.5-flash-8b",
-	"gemini-1.5-pro",
+	"gemini-flash-latest",
+	"gemini-flash-lite-latest",
+    "gemini-3.8-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
 
 	NOTE:
-	- gemini-2.0-flash is the safest default choice for most Roblox bots
+	- gemini-3.1-flash-lite is the safest default choice for most Roblox bots
 	- free-tier model availability can vary by account and region
 ]]
 
