@@ -81,7 +81,7 @@ local function resolveTarget(raw)
 	if trimmed == "" then return nil, nil, false end
 	if tonumber(trimmed) then
 		local uid2 = tostring(math.floor(tonumber(trimmed)))
-		return uid2, "userid:" .. uid2, true
+		return uid2, uid2, true
 	end
 	local lower = trimmed:lower()
 	local exactName, exactDisplay, partialName, partialDisplay
@@ -96,10 +96,10 @@ local function resolveTarget(raw)
 	local matched = exactName or exactDisplay or partialName or partialDisplay
 	if matched then
 		local uid2 = tostring(matched.UserId)
-		local label = matched.Name .. " (" .. matched.DisplayName .. ") [" .. uid2 .. "]"
+		local label = matched.Name
 		return uid2, label, true
 	end
-	return lower, trimmed .. " (stored as username, player not in game)", true
+	return lower, trimmed, true
 end
 local function isIgnored(plr)
 	if not plr then return false end
@@ -374,7 +374,7 @@ end
 local pr = bpr()
 local tps = {
 	"Walk up to me and just type in chat to talk to me!",
-	"You are far away. Type " .. c .. "then your question to reach me.",
+	"If you are far away. Type " .. c .. "then your question to reach me.",
 	"I am an AI bot. Just walk close to me and chat!",
 	"Too far away? Put " .. c .. "at the start of your message.",
 	"Close to me means you can just type. Far away means add " .. c .. "first.",
