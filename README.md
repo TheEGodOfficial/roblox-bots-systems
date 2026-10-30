@@ -33,7 +33,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblo
 
 ### Loop Kill Bot
 
-Made in LuaU and very little coding made by AI (The only AI coded stuff is tiny changes and silent errors i couldn't figure out.)
+Made in LuaU and very little coding made by AI (The only AI coded stuff is tiny changes and silent errors i couldn't figure out. The instructions comment is AI generated too.)
 
 **Code:**
 ```luau
