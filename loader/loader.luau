@@ -9,7 +9,7 @@ local lp = game:GetService("Players").LocalPlayer
 local env = (type(getgenv) == "function" and getgenv()) or shared or _G
 
 local APIKey = nil
-local AIModel = "gemini-flash-latest"
+local AIModel = "gemini-3.1-flash-lite"
 local ChatCommand = "/ai "
 local TokenCount = 200
 local ChatRadius = 35
@@ -130,7 +130,7 @@ acbTab:AddDropdown{
         "gemini-2.5-flash",
         "gemini-2.5-flash-lite",
     },
-    Default = "gemini-flash-latest",
+    Default = "gemini-3.1-flash-lite",
     Callback = function(v) AIModel = v end,
 }
 
