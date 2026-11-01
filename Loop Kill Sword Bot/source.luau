@@ -17,7 +17,7 @@ local ct=8
 local md=3
 local dd="BotLoopData"
 local df="BotLoopData/Data.json"
-local ver="1.1.0"
+local ver="1.2.1"
 local ad={
 	4603013888,
 	545411642,
@@ -94,6 +94,8 @@ local bz={}
 local cl=false
 local wh_cmd=nil
 local wh_chat=nil
+local wh_kill=nil
+local wh_jl=nil
 local env=(getgenv and getgenv()) or shared or _G
 env.GistToken=env.GistToken or nil
 env.GistLink=env.GistLink or nil
@@ -101,7 +103,7 @@ if env.GistToken=="" or env.GistToken==" " or env.GistToken=="YOUR_GITHUB_PAT" t
 	env.GistToken=nil
 end
 if env.GistLink=="" or env.GistLink==" " or env.GistLink=="YOUR_GIST_RAW_URL" then
-	env.GistLink = nil
+	env.GistLink=nil
 end
 local io2=isfile and isfolder and makefolder and writefile and readfile
 local function sd(m)
@@ -148,6 +150,8 @@ if env.GistToken and env.GistLink then
 	if ok and type(web)=="table" then
 		wh_cmd=web.cmd
 		wh_chat=web.chat
+		wh_kill=web.kill
+		wh_jl=web.jl
 	else
 		warn("failed to get webhooks: "..tostring(web))
 	end
@@ -204,6 +208,58 @@ local function lch(sp,msg)
 			fields={
 				{name="Player",value=pn.." ("..pi..")",inline=true},
 				{name="Message",value=msg,inline=false},
+				{name="Server",value=gi,inline=false},
+			},
+			timestamp=os.date("!%Y-%m-%dT%H:%M:%SZ"),
+		}},
+	})
+end
+local function lkill(killer,victim,reach)
+	if not wh_kill then return end
+	local gi=game.JobId~="" and game.JobId or "unknown"
+	local kn=killer and killer.Name or "Unknown"
+	local ki=killer and tostring(killer.UserId) or "?"
+	local vn=victim and victim.Name or "?"
+	local vi=victim and tostring(victim.UserId) or "?"
+	local rd=string.format("%.2f studs",reach or 0)
+	task.spawn(dw,wh_kill,{
+		embeds={{
+			title="Kill Log — Classic Sword",
+			color=0x2ECC71,
+			fields={
+				{name="Killer",value=kn.." ("..ki..")",inline=true},
+				{name="Victim",value=vn.." ("..vi..")",inline=true},
+				{name="Reach",value=rd,inline=true},
+				{name="Server",value=gi,inline=false},
+			},
+			timestamp=os.date("!%Y-%m-%dT%H:%M:%SZ"),
+		}},
+	})
+end
+local function ljoin(p)
+	if not wh_jl then return end
+	local gi=game.JobId~="" and game.JobId or "unknown"
+	task.spawn(dw,wh_jl,{
+		embeds={{
+			title="Player Joined",
+			color=0x1ABC9C,
+			fields={
+				{name="Player",value=p.Name.." ("..tostring(p.UserId)..")",inline=true},
+				{name="Server",value=gi,inline=false},
+			},
+			timestamp=os.date("!%Y-%m-%dT%H:%M:%SZ"),
+		}},
+	})
+end
+local function lleave(p)
+	if not wh_jl then return end
+	local gi=game.JobId~="" and game.JobId or "unknown"
+	task.spawn(dw,wh_jl,{
+		embeds={{
+			title="Player Left",
+			color=0xE67E22,
+			fields={
+				{name="Player",value=p.Name.." ("..tostring(p.UserId)..")",inline=true},
 				{name="Server",value=gi,inline=false},
 			},
 			timestamp=os.date("!%Y-%m-%dT%H:%M:%SZ"),
@@ -358,7 +414,7 @@ local function nf(th)
 			else
 				pcall(sethiddenproperty,hm,"MoveDirectionInternal",Vector3.zero)
 			end
-			pcall(sethiddenproperty,hm,"NetworkHumanoidState",Enum.HumanoidStateType.Freefall.Value)
+			pcall(sethiddenproperty,hm,"NetworkHumanoidStateType",Enum.HumanoidStateType.Freefall.Value)
 		end
 		if th and th.Parent then
 			ag=ag+8
@@ -486,15 +542,15 @@ local function csu(sp,a)
 		lc(sp,"/saveunloop",a)
 	end
 end
-local ac
+local acc
 local function ga()
-	if ac then return ac end
+	if acc then return acc end
 	local o={}
 	for _,i in ipairs(ad) do
 		local ok,n=pcall(function() return sv:GetNameFromUserIdAsync(i) end)
 		o[#o+1]=ok and n or("Failed to load ("..i..")")
 	end
-	ac=o
+	acc=o
 	return o
 end
 local function lo(h,l)
@@ -578,8 +634,40 @@ local function hk(p)
 		cl=false
 	end)
 end
-sv.PlayerAdded:Connect(hk)
-for _,p in ipairs(sv:GetPlayers()) do hk(p) end
+local function watch_kills(p)
+	local function hook_char(char)
+		if not char then return end
+		local hm=char:WaitForChild("Humanoid",10)
+		if not hm then return end
+		hm.Died:Connect(function()
+			local tag=hm:FindFirstChild("creator")
+			local killer=tag and tag.Value
+			local tr=char:FindFirstChild("HumanoidRootPart")
+			local reach=0
+			if killer and killer.Character then
+				local ar=killer.Character:FindFirstChild("HumanoidRootPart")
+				if ar and tr then
+					reach=(ar.Position-tr.Position).Magnitude
+				end
+			end
+			lkill(killer,p,reach)
+		end)
+	end
+	if p.Character then hook_char(p.Character) end
+	p.CharacterAdded:Connect(hook_char)
+end
+sv.PlayerAdded:Connect(function(p)
+	ljoin(p)
+	hk(p)
+	watch_kills(p)
+end)
+sv.PlayerRemoving:Connect(function(p)
+	lleave(p)
+end)
+for _,p in ipairs(sv:GetPlayers()) do
+	hk(p)
+	watch_kills(p)
+end
 task.spawn(function()
 	while true do
 		task.wait(0.1)
