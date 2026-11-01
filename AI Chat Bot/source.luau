@@ -796,7 +796,6 @@ local function fp(pth, goal)
 	local wps = pth:GetWaypoints()
 	if not wps or #wps == 0 then return false end
 	saj()
-	ssu()
 	local rc = 0
 	local lr = hrp and hrp.Position or Vector3.new()
 	for i, wp in ipairs(wps) do
