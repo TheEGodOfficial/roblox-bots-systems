@@ -451,6 +451,11 @@ local hmsgs = {
 	"Stop it! That hurts!",
 }
 
+if b then
+	hum = b:FindFirstChildOfClass("Humanoid")
+	hrp = b:FindFirstChild("HumanoidRootPart")
+end
+
 local msgdb = false
 
 dcon = hum.Died:Connect(function()
@@ -475,10 +480,6 @@ hcon = hum.HealthChanged:Connect(function(health)
 	hcount = hum.Health
 end)
 
-if b then
-	hum = b:FindFirstChildOfClass("Humanoid")
-	hrp = b:FindFirstChild("HumanoidRootPart")
-end
 lp.CharacterAdded:Connect(function(chr)
 	if dcon ~= nil then
 		dcon:Disconnect()
