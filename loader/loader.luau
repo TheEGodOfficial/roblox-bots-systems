@@ -208,7 +208,13 @@ lkbTab:AddSection("Loader")
 lkbTab:AddButton{
     Text = "Load Script",
     Callback = function()
-        
+        env.MASTER_NAMES = MASTER_NAMES
+        env.PREFIX = PREFIX
+
+        env.BOT_INDEX = BOT_INDEX
+        env.MAX_BOTS = MAX_BOTS
+
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/Bot%20Control/source.luau"))()
     end,
 }
 
