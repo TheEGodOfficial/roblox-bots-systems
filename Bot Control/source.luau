@@ -174,6 +174,7 @@ local function queueChat(message)
 			if #chatQueue > 0 then
 				task.wait(BURST_GAP) -- 3s between bursts
 			end
+			task.wait(BURST_GAP)
 		end
 		processing = false
 	end)
