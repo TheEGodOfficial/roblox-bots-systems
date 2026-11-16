@@ -166,6 +166,12 @@ Execute on your alt and you can use chat commands to control it.
 
 ```luau
 --[[
+MIT License
+
+Copyright (c) 2026 E God/Fred
+]]
+
+--[[
 MULTI-BOT SETUP:
 Set BOT_INDEX to 1,2,3... on each alt's copy.
 Set MAX_BOTS to total number of alts running.
