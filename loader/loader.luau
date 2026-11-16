@@ -20,6 +20,12 @@ local WanderWait = 3
 local GistToken = nil
 local GistLink = nil
 
+local MASTER_NAMES = {}
+local PREFIX = "!"
+local BOT_INDEX = 1
+local MAX_BOTS = 4
+
+
 local Nova = loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/Nova-UI-Library/refs/heads/main/NovaUILib.lua"))()
 
 local win = Nova.Window{
@@ -194,6 +200,67 @@ acbTab:AddSlider{
     Increment = 1,
     Suffix = "s",
     Callback = function(v) WanderWait = v end,
+}
+
+local lkbTab = win:AddTab("Alt Controller", "")
+
+lkbTab:AddSection("Loader")
+lkbTab:AddButton{
+    Text = "Load Script",
+    Callback = function()
+        
+    end,
+}
+
+lkbTab:AddSection("Bot Config")
+
+lkbTab:AddLabel("Read README.md for more information about how to use this.")
+
+lkbTab:AddTextInput{
+    Text = "Masters",
+    Key = "mastersBox",
+    Placeholder = "Split the usernames with ',' with no spaces",
+    Callback = function(text, enter)
+        if enter then
+            table.clear(MASTER_NAMES)
+            local users = text:Split(",")
+            for _,user in pairs(users) do
+                table.insert(MASTER_NAMES, user)
+            end
+        end
+    end,
+}
+
+lkbTab:AddTextInput{
+    Text = "Cmd Prefix",
+    Key = "prefixBox",
+    Placeholder = "Put a cmd prefix that isnt | or ,",
+    Default = "!",
+    Callback = function(text, enter)
+        if enter then GistLink = text ~= "" and text or nil end
+    end,
+}
+
+acbTab:AddSlider{
+    Text = "Bot Amount",
+    Key = "botIndex",
+    Min = 1,
+    Max = 20,
+    Default = 1,
+    Increment = 1,
+    Suffix = " bots",
+    Callback = function(v) BOT_INDEX = v end,
+}
+
+acbTab:AddSlider{
+    Text = "Max Bots",
+    Key = "maxBots",
+    Min = 1,
+    Max = 20,
+    Default = 4,
+    Increment = 1,
+    Suffix = " bots",
+    Callback = function(v) MAX_BOTS = v end,
 }
 
 local cfgTab = win:AddTab("Config", "⚙️")
