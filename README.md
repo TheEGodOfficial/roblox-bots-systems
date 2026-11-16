@@ -159,3 +159,35 @@ env.WanderWait = 3
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/AI%20Chat%20Bot/source.luau"))()
 ```
+
+### Alt Bot Controller
+
+Execute on your alt and you can use chat commands to control it.
+
+```luau
+--[[
+MULTI-BOT SETUP:
+Set BOT_INDEX to 1,2,3... on each alt's copy.
+Set MAX_BOTS to total number of alts running.
+Orbit/follow/circle spread evenly; stalk staggers behind.
+
+MASTERS SETUP:
+To add more masters for your servant you have to set env.MASTER_NAMES and put ,"Username here" after the other "Username here" and continue adding ,"Username here" if you want more.
+Keep the quotes as they are needed.
+Replace Username here with your username and other usernames of players you want to be masters.
+
+PREFIX SETUP:
+Set env.PREFIX to anything as long as its not , or | as these are used for some commands.
+]]
+
+local env = (getgenv and getgenv()) or shared or _G
+
+-- CONFIG
+env.MASTER_NAMES = {"Username here"}
+env.PREFIX = "!"
+
+env.BOT_INDEX = 1
+env.MAX_BOTS = 4
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/TheEGodOfficial/roblox-bots-systems/refs/heads/main/Bot%20Control/source.luau"))()
+```
